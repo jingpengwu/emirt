@@ -19,11 +19,8 @@ def add_boundary_im(im):
 
 def add_boundary_2D(vol):
     Nz,Ny,Nx = vol.shape 
-    for z in range(Nz):
-        # extract an image    
-        im = vol[z,:,:]
-        im2 = add_boundary_im(im)
-        vol[z,:,:] = im2
+    for z in range(Nz): 
+        vol[z,:,:] = add_boundary_im(vol[z,:,:])
     return vol
     
 def add_boundary_3D(vol, neighbor = 6):

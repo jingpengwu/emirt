@@ -5,32 +5,43 @@ Created on Wed Jan 28 14:28:47 2015
 @author: jingpeng
 """
 import numpy as np
+import matplotlib.pylab as plt
 
-def show_3d_slices(vol):
-    # transform to random color
-    
-    # transpose for correct show
-    vol = vol.transpose()
-    
-    # show the image stack
-    import pyqtgraph as pg
-#    cm = np.random.rand(np.max(vol))
-#    pg.colormap(cm)
-    imv = pg.ImageView()
-    imv.show()
-    imv.setImage(vol)
-    
-# 3D volume rendering using mayavi
-def mayavi_3d_rendering(vol):
-    vol = vol.transpose()
-    from mayavi import mlab
-#    mlab.pipeline.volume(mlab.pipeline.scalar_field(vol))
-    mlab.pipeline.image_plane_widget(mlab.pipeline.scalar_field(vol),
-                                plane_orientation='z_axes',
-                                slice_index=10,
-                                )
+class compare_vol:
+    def __init__(self, v1, v2):
+        self.v1 = v1
+        self.v2 = v2
+        self.Nz = min(v1.shape[0], v2.shape[0])
+        self.z = 0
+        
+    def show_slice(self):
+        if self.z >= 0 or self.z < self.Nz:
+            self.ax1.images.pop()
+            self.ax1.imshow(self.v1[self.z,:,:], interpolation='nearest')
+            self.ax1.set_xlabel( 'slice {}'.format(self.z) )
 
-
+            self.ax2.images.pop()
+            self.ax2.imshow(self.v2[self.z,:,:], interpolation='nearest')
+            self.ax2.set_xlabel( 'slice {}'.format(self.z) )
+            self.fig.canvas.draw()
+        else:
+            print 'out of bound!'
+        
+    def press(self, event):
+        print 'press ' + event.key
+        if 'down' in event.key:
+            self.z+=1            
+        elif 'up' in event.key:
+            self.z-=1
+        self.show_slice()        
+        
+    def vol_compare_slice(self):   
+        self.fig, (self.ax1, self.ax2) = plt.subplots(1,2, sharey=True)
+        self.fig.canvas.mpl_connect('key_press_event', self.press)
+        self.ax1.imshow(self.v1[self.z,:,:], interpolation='nearest')
+        self.ax1.set_xlabel( 'slice {}'.format(self.z) )
+        self.ax2.imshow(self.v2[self.z,:,:], interpolation='nearest')
+        self.ax2.set_xlabel( 'slice {}'.format(self.z) )
     
 def vol_slider( vol, cmap='gray' ):
     """
@@ -92,7 +103,7 @@ def random_color_show( im, mode='im' ):
     if 0==im.max():
         assert('the maximum label is 0!!')
     cmap_array = np.random.rand ( im.max(),3)
-    cmap_array[0] = [0,0,0]   
+    cmap_array[0,:] = [0,0,0]   
     cmap=mcolor.ListedColormap( cmap_array )
     if mode=='im':
         plt.imshow(im, cmap= cmap )
