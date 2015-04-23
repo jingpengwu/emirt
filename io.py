@@ -5,12 +5,7 @@ Created on Wed Jan 28 14:27:31 2015
 @author: jingpeng
 """
 
-#import sys
-#sys.path.append('./tifffile')
-
 import numpy as np
-
-#import tifffile
 
 #%% read hdf5 volume
 def imread( fname ):
