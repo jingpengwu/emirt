@@ -9,48 +9,41 @@ Created on Wed Jan 28 14:27:31 2015
 #sys.path.append('./tifffile')
 
 import numpy as np
-import h5py
+
 #import tifffile
 
 #%% read hdf5 volume
 def imread( fname ):
     if '.hdf5' in fname or '.h5' in fname:
-        fname = fname.replace(".hdf5", "")
+        import h5py
         f = h5py.File( fname )
         v = np.asarray( f['/main'] )
         f.close()
         print 'finished reading image stack :)'
         return v
     elif '.tif' in fname:
-        import skimage.io
-        vol = skimage.io.imread( fname, plugin='tifffile' )
-        #import tifffile
-        #vol = tifffile.imread(fname)
+#        import skimage.io
+#        vol = skimage.io.imread( fname, plugin='tifffile' )
+        import tifffile
+        vol = tifffile.imread(fname)
         #import scipy as sp
         #vol = sp.misc.imread(fname)
         return vol 
     else:
         print 'file name error, only suport tif and hdf5 now!!!'
 
-# load binary znn image
-def load_znn_image( fname, ext=''):
-    vol = np.fromfile(fname + ext, dtype='double')
-    sz = np.fromfile(fname+'.size', dtype='uint32')
-    vol = vol.reshape(sz, order='F').transpose()
-    return vol
-
-def imsave( vol, fname, order='C' ):
-#    if order=='F':
-#        vol=vol.transpose((2,1,0))
-    
+def imsave( vol, fname ):    
     if '.hdf5' in fname or '.h5' in fname:
+        import h5py
         f = h5py.File( fname )
         f.create_dataset('/main', data=vol)
         f.close()
         print 'hdf5 file was written :)'
     elif '.tif' in fname:
-        import skimage.io
-        skimage.io.imsave(fname, vol, plugin='tifffile')
+#        import skimage.io
+#        skimage.io.imsave(fname, vol, plugin='tifffile')
+        import tifffile
+        tifffile.imsave(fname, vol)
     else:
         print 'file name error! only support tif and hdf5 now!!!'
         
@@ -67,13 +60,44 @@ def load_variable( vname ):
     f.close()
     return var
 
+# load binary znn image
+def znn_img_read( fname ):
+    if '.image' in fname:
+        fname = fname.replace('.image', "")
+        ext = ".image"
+        dtype = 'double'
+    elif '.label' in fname:
+        fname = fname.replace(".label", "")
+        ext = ".label"
+        dtype = 'uint8'
+    else:
+        ext = ""
+        dtype = "double"
+    vol = np.fromfile(fname + ext, dtype=dtype)
+    sz = np.fromfile(fname+'.size', dtype='uint32')
+    vol = vol.reshape(sz, order='F').transpose()
+    return vol
+
+def znn_img_save(vol, fname):
+    if ".image" in fname:
+        fname = fname.replace(".image", "")
+        ext = ".image"
+    elif ".label" in fname:
+        fname = fname.replace(".label", "")
+        ext = ".label"
+    else:
+        ext = ""
+    vol.tofile(fname+ext)
+    sz = np.asarray( vol.shape, dtype='uint32' )[::-1]
+    sz.tofile(fname+".size", dtype='uint32')
+
 def write_for_znn(Dir, vol, cid):
     '''transform volume to znn format'''
     # make directory
-    import neupy.os    
-    neupy.os.mkdir_p(Dir )
-    neupy.os.mkdir_p(Dir + 'data')
-    neupy.os.mkdir_p(Dir + 'spec')
+    import emirt.os    
+    emirt.os.mkdir_p(Dir )
+    emirt.os.mkdir_p(Dir + 'data')
+    emirt.os.mkdir_p(Dir + 'spec')
     vol.tofile(Dir + 'data/' + 'batch'+str(cid)+'.image')
     sz = np.asarray(vol.shape)
     sz.tofile(Dir + 'data/' + 'batch'+str(cid)+'.size')

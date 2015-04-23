@@ -8,40 +8,38 @@ import numpy as np
 import matplotlib.pylab as plt
 
 class compare_vol:
-    def __init__(self, v1, v2):
+    def __init__(self, v1, v2, cmap='gray'):
         self.v1 = v1
         self.v2 = v2
         self.Nz = min(v1.shape[0], v2.shape[0])
         self.z = 0
+        self.cmap = cmap
         
     def show_slice(self):
-        if self.z >= 0 or self.z < self.Nz:
-            self.ax1.images.pop()
-            self.ax1.imshow(self.v1[self.z,:,:], interpolation='nearest')
-            self.ax1.set_xlabel( 'slice {}'.format(self.z) )
+        self.ax1.images.pop()
+        self.ax1.imshow(self.v1[self.z,:,:], interpolation='nearest', cmap=self.cmap)
+        self.ax1.set_xlabel( 'first volume: slice {}'.format(self.z) )
 
-            self.ax2.images.pop()
-            self.ax2.imshow(self.v2[self.z,:,:], interpolation='nearest')
-            self.ax2.set_xlabel( 'slice {}'.format(self.z) )
-            self.fig.canvas.draw()
-        else:
-            print 'out of bound!'
+        self.ax2.images.pop()
+        self.ax2.imshow(self.v2[self.z,:,:], interpolation='nearest', cmap=self.cmap)
+        self.ax2.set_xlabel( 'second volume: slice {}'.format(self.z) )
+        self.fig.canvas.draw()
         
     def press(self, event):
-        print 'press ' + event.key
-        if 'down' in event.key:
+#        print 'press ' + event.key
+        if 'down' in event.key and self.z<self.Nz:
             self.z+=1            
-        elif 'up' in event.key:
+        elif 'up' in event.key and self.z>-self.Nz:
             self.z-=1
         self.show_slice()        
         
     def vol_compare_slice(self):   
         self.fig, (self.ax1, self.ax2) = plt.subplots(1,2, sharey=True)
         self.fig.canvas.mpl_connect('key_press_event', self.press)
-        self.ax1.imshow(self.v1[self.z,:,:], interpolation='nearest')
-        self.ax1.set_xlabel( 'slice {}'.format(self.z) )
-        self.ax2.imshow(self.v2[self.z,:,:], interpolation='nearest')
-        self.ax2.set_xlabel( 'slice {}'.format(self.z) )
+        self.ax1.imshow(self.v1[self.z,:,:], interpolation='nearest', cmap=self.cmap)
+        self.ax1.set_xlabel( 'first  volume: slice {}'.format(self.z) )
+        self.ax2.imshow(self.v2[self.z,:,:], interpolation='nearest', cmap=self.cmap)
+        self.ax2.set_xlabel( 'second volume: slice {}'.format(self.z) )
     
 def vol_slider( vol, cmap='gray' ):
     """
@@ -63,7 +61,7 @@ def vol_slider( vol, cmap='gray' ):
     plt.subplots_adjust(left=0.25, bottom=0.25)
     
     frame = 0
-    l = plt.imshow(vol[frame,:,:]) 
+    l = plt.imshow(vol[frame,:,:], cmap = cmap) 
     
     axcolor = 'lightgoldenrodyellow'
     axframe = plt.axes([0.25, 0.1, 0.65, 0.03], axisbg=axcolor)
