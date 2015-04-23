@@ -84,7 +84,7 @@ def znn_img_save(vol, fname):
         ext = ""
     vol.tofile(fname+ext)
     sz = np.asarray( vol.shape, dtype='uint32' )[::-1]
-    sz.tofile(fname+".size", dtype='uint32')
+    sz.tofile(fname+".size")
 
 def write_for_znn(Dir, vol, cid):
     '''transform volume to znn format'''
