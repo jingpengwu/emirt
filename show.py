@@ -7,7 +7,7 @@ Created on Wed Jan 28 14:28:47 2015
 import numpy as np
 import matplotlib.pylab as plt
 
-class compare_vol:
+class CompareVol:
     def __init__(self, v1, v2, cmap='gray'):
         self.v1 = v1
         self.v2 = v2
@@ -15,7 +15,7 @@ class compare_vol:
         self.z = 0
         self.cmap = cmap
         
-    def show_slice(self):
+    def __show_slice(self):
         self.ax1.images.pop()
         self.ax1.imshow(self.v1[self.z,:,:], interpolation='nearest', cmap=self.cmap)
         self.ax1.set_xlabel( 'first volume: slice {}'.format(self.z) )
@@ -25,17 +25,17 @@ class compare_vol:
         self.ax2.set_xlabel( 'second volume: slice {}'.format(self.z) )
         self.fig.canvas.draw()
         
-    def press(self, event):
+    def __press(self, event):
 #        print 'press ' + event.key
         if 'down' in event.key and self.z<self.Nz:
             self.z+=1            
         elif 'up' in event.key and self.z>-self.Nz:
             self.z-=1
-        self.show_slice()        
+        self.__show_slice()        
         
     def vol_compare_slice(self):   
         self.fig, (self.ax1, self.ax2) = plt.subplots(1,2, sharey=True)
-        self.fig.canvas.mpl_connect('key_press_event', self.press)
+        self.fig.canvas.mpl_connect('key_press_event', self.__press)
         self.ax1.imshow(self.v1[self.z,:,:], interpolation='nearest', cmap=self.cmap)
         self.ax1.set_xlabel( 'first  volume: slice {}'.format(self.z) )
         self.ax2.imshow(self.v2[self.z,:,:], interpolation='nearest', cmap=self.cmap)

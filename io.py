@@ -60,20 +60,18 @@ def znn_img_read( fname ):
     if '.image' in fname:
         fname = fname.replace('.image', "")
         ext = ".image"
-        dtype = 'double'
     elif '.label' in fname:
         fname = fname.replace(".label", "")
         ext = ".label"
-        dtype = 'uint8'
     else:
         ext = ""
-        dtype = "double"
-    vol = np.fromfile(fname + ext, dtype=dtype)
-    sz = np.fromfile(fname+'.size', dtype='uint32')
+    vol = np.fromfile(fname + ext, dtype='double')
+    sz = np.fromfile(fname+'.size', dtype='uint32')[:3]
     vol = vol.reshape(sz, order='F').transpose()
     return vol
 
 def znn_img_save(vol, fname):
+#    vol = vol.astype('double')
     if ".image" in fname:
         fname = fname.replace(".image", "")
         ext = ".image"
