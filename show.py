@@ -40,37 +40,52 @@ class CompareVol:
         self.ax1.set_xlabel( 'first  volume: slice {}'.format(self.z) )
         self.ax2.imshow(self.v2[self.z,:,:], interpolation='nearest', cmap=self.cmap)
         self.ax2.set_xlabel( 'second volume: slice {}'.format(self.z) )
+	plt.show()
     
-def vol_slider( vol, cmap='gray' ):
-    """
-    slider 3D numpy array
-    
-    """
-    import matplotlib.pylab as plt
-    from matplotlib.widgets import Slider
-
-    # make a random color map, but the background should be black
-    if 0 == vol.max():
-        assert('the maximum label is 0!!')
-    if "rand" in cmap:
-        import matplotlib.colors as mcolor
-        cmap_array = np.random.rand ( vol.max(), 3)
-        cmap_array[0,:] = np.array( [0,0,0] )
-        cmap=mcolor.ListedColormap( cmap_array )
-    plt.subplot(111)
-    plt.subplots_adjust(left=0.25, bottom=0.25)
-    
-    frame = 0
-    l = plt.imshow(vol[frame,:,:], cmap = cmap) 
-    
-    axcolor = 'lightgoldenrodyellow'
-    axframe = plt.axes([0.25, 0.1, 0.65, 0.03], axisbg=axcolor)
-    sframe = Slider(axframe, 'Frame', 0, 100, valinit=0)
-    def update(val):
-        frame = np.around(sframe.val)
-        l.set_data(vol[frame,:,:])
-    sframe.on_changed(update)
-    plt.show()
+class VolSlider:
+    def __init__(self, fname, cmap='gray'):
+        if ".h5" in fname or ".hdf5" in fname:
+            import h5py
+            f = h5py.File(fname)
+            self.v1 = f['/main']
+            if len(f['/main'].dims) == 3:
+                self.Nz = self.v1.dims[0]
+            elif len(f['/main'].dims) == 4:
+                self.Nz = self.v1.dims[1]
+            else:
+                raise RuntimeError('invalid input matrix dimension')
+        else:
+            import emirt.io
+            self.v1 = emirt.io.imread( fname )
+            self.Nz = self.v1.shape[0]
+        self.z = 0
+        self.cmap = cmap
+        
+    def __show_slice(self):
+        self.ax1.images.pop()
+        if len(self.v1.dims) == 3:
+            self.ax1.imshow(self.v1[self.z,:,:], interpolation='nearest', cmap=self.cmap)
+        else:
+            self.ax1.imshow(self.v1[0,self.z,:,:], interpolation='nearest', cmap=self.cmap)
+        self.ax1.set_xlabel( 'first volume: slice {}'.format(self.z) )
+        self.fig.canvas.draw()
+        
+    def __press(self, event):
+#        print 'press ' + event.key
+        if 'down' in event.key and self.z<self.Nz:
+            self.z+=1            
+        elif 'up' in event.key and self.z>-self.Nz:
+            self.z-=1
+        self.__show_slice()        
+        
+    def show(self):   
+        self.fig, self.ax1 = plt.subplots(1,1)
+        self.fig.canvas.mpl_connect('key_press_event', self.__press)
+        if len(self.v1.dims) == 3:
+            self.ax1.imshow(self.v1[self.z,:,:], interpolation='nearest', cmap=self.cmap)
+        else:
+            self.ax1.imshow(self.v1[0,self.z,:,:], interpolation='nearest', cmap=self.cmap)
+        self.ax1.set_xlabel( 'first  volume: slice {}'.format(self.z) )
 
 def mat_show(mat, xlabel=''):
     import matplotlib.pylab as plt   
@@ -87,7 +102,7 @@ def mat_show(mat, xlabel=''):
         else:
             ax1.annotate(s, xy=(i,j), ha='center', va='center', color='white')
     ax1.set_xlabel(xlabel)
-    plt.show()        
+    plt.show()
 
 def imshow(im):
     import matplotlib.pylab as plt

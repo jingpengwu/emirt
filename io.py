@@ -21,8 +21,6 @@ def imread( fname ):
 #        vol = skimage.io.imread( fname, plugin='tifffile' )
         import tifffile
         vol = tifffile.imread(fname)
-        #import scipy as sp
-        #vol = sp.misc.imread(fname)
         return vol 
     else:
         print 'file name error, only suport tif and hdf5 now!!!'
