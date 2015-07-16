@@ -24,7 +24,7 @@ Nicholas Turner, Jingpeng Wu June 2015
 import timeit
 import argparse
 import numpy as np
-from emirt import io
+import io
 from cynn import relabel, overlap_matrix
 from os import path
 
