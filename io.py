@@ -63,9 +63,8 @@ def znn_img_read( fname ):
         ext = ".label"
     else:
         ext = ""
-    vol = np.fromfile(fname + ext, dtype='double')
-    sz = np.fromfile(fname+'.size', dtype='uint32')[:3]
-    vol = vol.reshape(sz, order='F').transpose()
+    sz = np.fromfile(fname+'.size', dtype='uint32')[::-1]
+    vol = np.fromfile(fname + ext, dtype='double').reshape(sz)
     return vol
 
 def znn_img_save(vol, fname):
