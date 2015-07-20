@@ -87,11 +87,11 @@ class CompareVol:
 
     def __press(self, event):
 #       print 'press ' + event.key
-        if 'down' in event.key and self.z<self.Nz:
+        if 'down' == event.key and self.z<self.Nz:
             self.z+=1            
-        elif 'up' in event.key and self.z>-self.Nz:
+        elif 'up' == event.key and self.z>-self.Nz:
             self.z-=1
-        elif 'c' in event.key:
+        elif 'c' == event.key:
             #Swap between color display and b&w
             self.colorplot[self.selected] = not self.colorplot[self.selected]
             
@@ -103,7 +103,7 @@ class CompareVol:
             else:
                 self.cmap[self.selected] = 'gray'
 
-        elif 'v' in event.key:
+        elif 'v' == event.key:
             #Display the data values for the given data coordinate
             xcoord, ycoord = int(event.xdata), int(event.ydata)
 
