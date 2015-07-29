@@ -31,27 +31,34 @@ from os import path
 def threshold_volume(vol, threshold):
 	return (vol > threshold).astype('uint32')
 
-def rand_error(om):
+def om_rand_error(om):
 	'''Calculates the rand error of an unnormalized (raw counts) overlap matrix'''
 
 	counts1 = om.sum(1)
 	counts2 = om.sum(0)
 
-	#float allows easier division
+	#float allows division
 	N = float(counts1.sum())
 
 	a_term = np.sum(np.square(counts1 / N))
 	b_term = np.sum(np.square(counts2 / N))
-	
+
 	# Yields overflow errors
 	# a_term = np.sum(np.square(counts1)) / (N ** 2)
 	# b_term = np.sum(np.square(counts2)) / (N ** 2)
 
 	#p term requires a bit more work with sparse matrix
-	sq_vals = np.copy(om.data) ** 2
+	sq_vals = np.square(np.copy(om.data))
 	p_term = np.sum(sq_vals) / (N ** 2)
 
 	return a_term + b_term - 2*p_term
+
+def seg_rand_error(seg1, seg2):
+	'''Higher-level function which handles computing the overlap matrix'''
+
+	om = overlap_matrix.overlap_matrix(seg1, seg2)
+
+	return om_rand_error(om)
 
 def main(vol_fname, label_fname, threshold=0.5, save=False):
 
@@ -93,7 +100,7 @@ def main(vol_fname, label_fname, threshold=0.5, save=False):
 	print "Matrix Calculated in %f seconds" % (end-start)
 
 	print "Calculating Rand Error..."
-	RE = rand_error(om)
+	RE = om_rand_error(om)
 
 	print "Rand Error: "
 	print RE
