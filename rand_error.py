@@ -40,8 +40,12 @@ def rand_error(om):
 	#float allows easier division
 	N = float(counts1.sum())
 
-	a_term = np.sum(np.square(counts1)) / (N ** 2)
-	b_term = np.sum(np.square(counts2)) / (N ** 2)
+	a_term = np.sum(np.square(counts1 / N))
+	b_term = np.sum(np.square(counts2 / N))
+	
+	# Yields overflow errors
+	# a_term = np.sum(np.square(counts1)) / (N ** 2)
+	# b_term = np.sum(np.square(counts2)) / (N ** 2)
 
 	#p term requires a bit more work with sparse matrix
 	sq_vals = np.copy(om.data) ** 2
