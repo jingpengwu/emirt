@@ -77,12 +77,9 @@ class CompareVol:
         self.fig.canvas.draw()
         
     def __make_cmap(self, i):
-
         #(0,0,0) = black
         plot_colors = np.vstack(((0,0,0), np.random.rand(500,3)))
-        cmap = colors.ListedColormap(plot_colors)
-
-        
+        cmap = colors.ListedColormap(plot_colors)       
         return cmap
 
     def __press(self, event):
@@ -97,9 +94,7 @@ class CompareVol:
             
             if self.colorplot[self.selected]:
                 new_cmap = self.__make_cmap(self.selected)
-
                 self.cmap[self.selected] = new_cmap
-
             else:
                 self.cmap[self.selected] = 'gray'
 
@@ -174,7 +169,7 @@ class VolSlider:
             self.ax1.imshow(self.v1[0,self.z,:,:], interpolation='nearest', cmap=self.cmap)
         self.ax1.set_xlabel( 'first  volume: slice {}'.format(self.z) )
 
-def mat_show(mat, xlabel=''):
+def matshow(mat, xlabel=''):
     import matplotlib.pylab as plt   
     fig = plt.figure()
     ax1 = fig.add_subplot(111)

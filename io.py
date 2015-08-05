@@ -81,6 +81,18 @@ def znn_img_save(vol, fname):
     sz = np.asarray( vol.shape, dtype='uint32' )[::-1]
     sz.tofile(fname+".size")
 
+def tif2h5(intif, outh5):
+    from tifffile import TiffFile
+    f = h5py.File( outh5 )
+    # how to get tif shape?
+    f.create_dataset('/main', shape=())
+    hv = f['/main']
+    with TiffFile(infname) as tif:
+        for k,page in enumerate(tif):
+            hv[k] = page.asarray()
+    f.close()
+                
+
 def write_for_znn(Dir, vol, cid):
     '''transform volume to znn format'''
     # make directory
