@@ -109,28 +109,26 @@ def find_root(ind, seg):
         seg[node-1] = ind
     return (ind, seg)
 
-def union_find(id1, id2, seg, tree_size):
+def union_tree(r1, r2, seg, tree_size):
     """
     union-find algorithm: tree_sizeed quick union with path compression
 
     Parameters
     ----------
-    id1,id2:  index of two nodes
+    r1,r2:  index of two root nodes.
     seg:   the segmenation volume with segment id. this array should be flatterned.
-    tree_size: the size of tree
+    tree_size: the size of tree.
 
     Return
     ------
     seg:       updated segmentation
     tree_size:    updated tree_size
     """
-    # find roots
-    r1, seg = find_root(id1, seg)
-    r2, seg = find_root(id2, seg)
     # merge small tree to big tree according to size
     if tree_size[r1-1] < tree_size[r2-1]:
-        seg[r1-1] = r2
-        tree_size[r2-1] = tree_size[r2-1] + tree_size[r1-1]
+        r1, r2 = r2, r1
+    seg[r2-1] = r1
+    tree_size[r1-1] = tree_size[r1-1] + tree_size[r2-1]
     return (seg, tree_size)
 
 def seg_aff( affs, threshold=0.5 ):
@@ -169,20 +167,19 @@ def seg_aff( affs, threshold=0.5 ):
         # get the index of connected nodes
         id1 = ids[e[0], e[1], e[2]]
         id2 = ids[e[0], e[1], e[2]-1]
-        # union-find algorithm
-        seg, tree_size = union_find(id1, id2, seg, tree_size)
     for e in yedges:
         # get the index of connected nodes
         id1 = ids[e[0], e[1],   e[2]]
         id2 = ids[e[0], e[1]-1, e[2]]
-        # union-find algorithm
-        seg, tree_size = union_find(id1, id2, seg, tree_size)
     for e in zedges:
         # get the index of connected nodes
         id1 = ids[e[0]  , e[1], e[2]]
         id2 = ids[e[0]-1, e[1], e[2]]
-        # union-find algorithm
-        seg, tree_size = union_find(id1, id2, seg, tree_size)
+
+    # union-find algorithm
+    r1, seg = find_root(id1, seg)
+    r2, seg = find_root(id2, seg)
+    seg, tree_size = union_tree(r1, r2, seg, tree_size)
 
     # relabel all the trees to root id
     it = np.nditer(seg, flags=['f_index'])
