@@ -8,7 +8,7 @@ Created on Wed Apr 15 16:40:02 2015
 import numpy as np
 cimport numpy as np
 cimport cython
-#@cython.boundscheck(False) # turn of bounds-checking for entire function
+#@cython.boundscheck(False) # turn off bounds-checking for entire function
 #@cython.wraparound(False)
 #@cython.nonecheck(False)
 
@@ -29,11 +29,11 @@ cdef dfs(np.ndarray[np.uint32_t, ndim=3] seg,\
         seg2[z,y,x] = relid
         mask[z,y,x] = True
         
-        #2d relabelling for now
-        # if z+1<seg.shape[0] and seg[z+1,y,x] == label and not mask[z+1,y,x] :
-            # seeds.append((z+1,y,x))
-        # if z-1>=0    and seg[z-1,y,x] == label and not mask[z-1,y,x] :
-            # seeds.append((z-1,y,x))
+        # 3D relabelling
+        if z+1<seg.shape[0] and seg[z+1,y,x] == label and not mask[z+1,y,x] :
+            seeds.append((z+1,y,x))
+        if z-1>=0    and seg[z-1,y,x] == label and not mask[z-1,y,x] :
+            seeds.append((z-1,y,x))
         if y+1<seg.shape[1] and seg[z,y+1,x] == label and not mask[z,y+1,x] :
             seeds.append((z,y+1,x))
         if y-1>=0    and seg[z,y-1,x] == label and not mask[z,y-1,x] :
