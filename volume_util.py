@@ -44,37 +44,59 @@ def add_boundary_3D(vol, neighbor = 6):
 
 
 def crop(vol, target_shape):
-	'''Crops the input volume to fit to the target shape'''
+    '''Currently only returns value of crop3d'''
+    return crop3d(vol, target_shape)
+
+def crop3d(vol, target_shape, round_up=None, pick_right=None):
+    '''
+    Crops the input 3d volume to fit to the target 3d shape
+
+    round_up: Whether to crop an extra voxel in the case of an odd dimension
+    difference
+    pick_right: Whether to prefer keeping the earlier index voxel in the case of
+    an odd dimension difference
+    '''
+    dim_diffs = np.array(vol.shape) - np.array(target_shape)
+
+    #Error checking
+    odd_dim_diff_exists = any([dim_diffs[i] % 2 == 1 for i in range(len(dim_diffs))])
+    if odd_dim_diff_exists and round_up == None and pick_right == None:
+        raise ValueError('Odd dimension difference between volume shape and target' + 
+                         ' with no handling specified')
+
 	if any([vol.shape[i] < target_shape[i] for i in range(len(target_shape))]	):
 		raise ValueError('volume already smaller that target volume!')
 
-	dim_diffs = (np.array(vol.shape) - np.array(target_shape)) / 2
 
-	#Cropping dimensions one at a time
-	cropped = vol
-	if dim_diffs[0] > 0: #unlikely
+    #Init
+    margin = np.zeros(dim_diffs.shape)
+    if round_up:
+        margin = np.ceil(dim_diffs / 2.0).astype(np.int)
 
-		cropped = vol[
-			dim_diffs[0]:-(dim_diffs[0]),
-			:,
-			:
-		]
+    #round_up == False || round_up == None
+    elif pick_right != None: 
+        #voxel selection option will handle the extra
+        margin = np.ceil(dim_diffs / 2.0).astype(np.int)
 
-	if dim_diffs[1] > 0:
-		cropped = cropped[
-			:,
-			dim_diffs[1]:-(dim_diffs[1]),
-			:
-			]
+    else: #round_up == None and pick_right == None => even dim diff
+        margin = dim_diffs / 2
 
-	if dim_diffs[2] > 0:
-		cropped = cropped[
-			:,
-			:,
-			dim_diffs[2]:-(dim_diffs[2])
-		]
+    zmin = margin[0]; zmax = vol.shape[0] - margin[0]
+    ymin = margin[1]; ymax = vol.shape[1] - margin[1]
+    xmin = margin[2]; xmax = vol.shape[2] - margin[2]
 
-	return cropped
+    #THIS SECTION NOT ENTITRELY CORRECT YET
+    # DOESN'T TAILOR 'SELECTION' TO AXES WITH THE ODD DIM DIFFS
+    if odd_dim_diff_exists and pick_right:
+
+        zmax += 1; ymax += 1; xmax += 1
+
+    elif odd_dim_diff_exists and pick_right != None: 
+        #pick_right == False => pick_left
+        
+        zmin -= 1; ymin -= 1; xmin -= 1
+
+    return vol[zmin:zmax, ymin:ymax, xmin:xmax]
 
 def norm(vol):
 	'''Normalizes the input volume to have values between 0 and 1
