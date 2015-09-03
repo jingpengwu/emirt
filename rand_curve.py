@@ -37,7 +37,7 @@ import scipy.sparse as sp #represents the dendrogram as a sparse mat
 import matplotlib.pylab as plt # for plotting the curve
 
 import emio
-from vol_utils import crop #This SHOULD be unnecessary, but could be useful
+from volume_util import crop #This SHOULD be unnecessary, but could be useful
 from cynn import relabel
 from rand_error import seg_fr_rand_error
 
