@@ -156,20 +156,21 @@ def union_tree(r1, r2, seg, tree_size):
 def seg_aff( affs, threshold=0.5 ):
     """
     get segmentation from affinity graph using union-find algorithm.
-    tree_sizeed quick union with path compression: https://www.cs.princeton.edu/~rs/AlgsDS07/01UnionFind.pdf
+    tree_sizeed quick union with path compression: 
+    https://www.cs.princeton.edu/~rs/AlgsDS07/01UnionFind.pdf
 
     Parameters:
     -----------
-    affs:  list of affinity graph
+    affs:  4D array of affinity graph
 
     Returns:
     --------
-    seg:   segmentation of affinity graph
+    seg:   3D array, segmentation of affinity graph
     """
     # get affinity graphs, copy the array to avoid changing of raw affinity graph
-    xaff = np.copy( affs.pop() )
-    yaff = np.copy( affs.pop() )
-    zaff = np.copy( affs.pop() )
+    xaff = np.copy( affs[2,:,:,:] )
+    yaff = np.copy( affs[1,:,:,:] )
+    zaff = np.copy( affs[0,:,:,:] )
     # remove the boundary edges
     xaff[:,:,0] = 0
     yaff[:,0,:] = 0

@@ -22,7 +22,7 @@ def mirror_data(dataset, buffer_sizes):
 
 	#Creating a view for the next dimension to mirror
 	#MIRRORING X
-	if buffer_sizes[0] > 0:
+	if buffer_sizes[2] > 0:
 		reversed_x = result[zmin:zmax,ymin:ymax, (xmax-1):(xmin-1):-1]
 
 		result[zmin:zmax, ymin:ymax,
