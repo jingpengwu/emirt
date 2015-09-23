@@ -213,9 +213,8 @@ def seg_aff( affs, threshold=0.5 ):
     seg, tree_size = union_tree(r1, r2, seg, tree_size)
 
     # relabel all the trees to root id
-    it = np.nditer(seg, flags=['f_index'])
-    while not it.finished:
-        root_ind, seg = find_root(it[0], seg)
-        seg[it.index-1] = root_ind
-
+    for k in xrange(seg.size):
+        root_ind, seg = find_root(seg[k], seg)
+        seg[k] = root_ind
+    seg = np.reshape(seg, affs.shape)
     return seg
