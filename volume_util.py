@@ -5,6 +5,8 @@ Created on Wed Mar  4 16:40:08 2015
 @author: jingpeng
 """
 import numpy as np
+from numba import autojit
+
 #%% add boundary between connected regions
 def add_boundary_im(im):
     Ni, Nj = im.shape
@@ -107,6 +109,7 @@ def norm(vol):
 
 	return vol
 
+#@autojit(nopython=True)
 def find_root(ind, seg):
     """
     quick find with path compression
@@ -131,6 +134,7 @@ def find_root(ind, seg):
         seg[node-1] = ind
     return (ind, seg)
 
+@autojit(nopython=True)
 def union_tree(r1, r2, seg, tree_size):
     """
     union-find algorithm: tree_sizeed quick union with path compression
@@ -167,6 +171,10 @@ def seg_aff( affs, threshold=0.5 ):
     --------
     seg:   3D array, segmentation of affinity graph
     """
+    if isinstance(affs, dict):
+        assert(len(affs.keys())==1)
+        affs = affs.values()[0]
+        
     # get affinity graphs, copy the array to avoid changing of raw affinity graph
     xaff = np.copy( affs[2,:,:,:] )
     yaff = np.copy( affs[1,:,:,:] )
