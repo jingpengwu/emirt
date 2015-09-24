@@ -158,20 +158,14 @@ def union_tree(r1, r2, seg, tree_size):
     tree_size[r1-1] = tree_size[r1-1] + tree_size[r2-1]
     return (seg, tree_size)
 
-def mark_bd(seg, affs, threshold=0.5):
+def mark_bd(seg):
+    unique, indices, counts = np.unique(seg, return_index=True, return_counts=True)
     # binary affinity graphs    
-    bas = (affs<threshold)
-    for z in xrange(seg.shape[0]):
-        for y in xrange(seg.shape[1]):
-            for x in xrange(seg.shape[2]):
-                if z == seg.shape[0]-1:
-                    z -= 1
-                if y == seg.shape[1]-1:
-                    y -= 1
-                if x == seg.shape[2]-1:
-                    x -= 1
-                if bas[0,z,y,x] and bas[1,z,y,x] and bas[2,z,y,x]:
-                    seg[z,y,x]=0
+    inds = indices[counts==1]
+    seg2 = seg.flatten()
+    seg2[inds] = 0
+    seg = seg2.reshape( seg.shape )
+    return seg   
     
 def seg_affs( affs, threshold=0.5 ):
     """
@@ -187,7 +181,6 @@ def seg_affs( affs, threshold=0.5 ):
     --------
     seg:   3D array, segmentation of affinity graph
     """
-    print "running python code!"
     if isinstance(affs, dict):
         assert(len(affs.keys())==1)
         affs = affs.values()[0]
@@ -241,5 +234,6 @@ def seg_affs( affs, threshold=0.5 ):
     seg = np.reshape(seg, seg_shp)
     
     # remove the boundary segments
-    seg = mark_bd(seg, affs, threshold)
+    seg = mark_bd(seg)
+    
     return seg
