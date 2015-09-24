@@ -2,10 +2,14 @@
 """
 Created on Wed Mar  4 16:40:08 2015
 
+compile to speedup:
+    cython -a volume_util.py
+    gcc -shared -pthread -fPIC -fwrapv -O2 -Wall -fno-strict-aliasing -I/usr/include/python2.7 -o volume_util.so volume_util.c
+
 @author: jingpeng
 """
 import numpy as np
-from numba import autojit
+#from numba import autojit
 
 #%% add boundary between connected regions
 def add_boundary_im(im):
@@ -66,9 +70,8 @@ def crop3d(vol, target_shape, round_up=None, pick_right=None):
         raise ValueError('Odd dimension difference between volume shape and target' + 
                          ' with no handling specified')
 
-	if any([vol.shape[i] < target_shape[i] for i in range(len(target_shape))]	):
-		raise ValueError('volume already smaller that target volume!')
-
+    if any([vol.shape[i] < target_shape[i] for i in range(len(target_shape))]	):
+        raise ValueError('volume already smaller that target volume!')
 
     #Init
     margin = np.zeros(dim_diffs.shape)
@@ -101,13 +104,11 @@ def crop3d(vol, target_shape, round_up=None, pick_right=None):
     return vol[zmin:zmax, ymin:ymax, xmin:xmax]
 
 def norm(vol):
-	'''Normalizes the input volume to have values between 0 and 1
-	(achieved by factor normalization to the max)'''
-
-	vol = vol - np.min(vol.astype('float32'))
-	vol = vol / np.max(vol)
-
-	return vol
+    '''Normalizes the input volume to have values between 0 and 1
+    (achieved by factor normalization to the max)'''
+    vol = vol - np.min(vol.astype('float32'))
+    vol = vol / np.max(vol)
+    return vol
 
 #@autojit(nopython=True)
 def find_root(ind, seg):
@@ -134,7 +135,7 @@ def find_root(ind, seg):
         seg[node-1] = ind
     return (ind, seg)
 
-@autojit(nopython=True)
+#@autojit(nopython=True)
 def union_tree(r1, r2, seg, tree_size):
     """
     union-find algorithm: tree_sizeed quick union with path compression
@@ -157,10 +158,25 @@ def union_tree(r1, r2, seg, tree_size):
     tree_size[r1-1] = tree_size[r1-1] + tree_size[r2-1]
     return (seg, tree_size)
 
-def seg_aff( affs, threshold=0.5 ):
+def mark_bd(seg, affs, threshold=0.5):
+    # binary affinity graphs    
+    bas = (affs<threshold)
+    for z in xrange(seg.shape[0]):
+        for y in xrange(seg.shape[1]):
+            for x in xrange(seg.shape[2]):
+                if z == seg.shape[0]-1:
+                    z -= 1
+                if y == seg.shape[1]-1:
+                    y -= 1
+                if x == seg.shape[2]-1:
+                    x -= 1
+                if bas[0,z,y,x] and bas[1,z,y,x] and bas[2,z,y,x]:
+                    seg[z,y,x]=0
+    
+def seg_affs( affs, threshold=0.5 ):
     """
     get segmentation from affinity graph using union-find algorithm.
-    tree_sizeed quick union with path compression: 
+    tree_size weighted quick union with path compression: 
     https://www.cs.princeton.edu/~rs/AlgsDS07/01UnionFind.pdf
 
     Parameters:
@@ -171,6 +187,7 @@ def seg_aff( affs, threshold=0.5 ):
     --------
     seg:   3D array, segmentation of affinity graph
     """
+    print "running python code!"
     if isinstance(affs, dict):
         assert(len(affs.keys())==1)
         affs = affs.values()[0]
@@ -179,42 +196,50 @@ def seg_aff( affs, threshold=0.5 ):
     xaff = np.copy( affs[2,:,:,:] )
     yaff = np.copy( affs[1,:,:,:] )
     zaff = np.copy( affs[0,:,:,:] )
-    # remove the boundary edges
-    xaff[:,:,0] = 0
-    yaff[:,0,:] = 0
-    zaff[0,:,:] = 0
+
     # get edges
     xedges = np.argwhere( xaff>threshold )
     yedges = np.argwhere( yaff>threshold )
     zedges = np.argwhere( zaff>threshold )
 
     # initialize segmentation with individual label of each voxel
-    N = xaff.size
-    ids = np.arange(1, N+1).reshape( xaff.shape )
+    seg_shp = np.asarray( xaff.shape ) + 1
+    N = np.prod( seg_shp ) 
+    ids = np.arange(1, N+1).reshape( seg_shp )
     seg = np.copy( ids ).flatten()
     tree_size = np.ones( seg.shape ).flatten()
     # create edge pair
     for e in xedges:
         # get the index of connected nodes
         id1 = ids[e[0], e[1], e[2]]
-        id2 = ids[e[0], e[1], e[2]-1]
+        id2 = ids[e[0], e[1], e[2]+1]
+        # union-find algorithm
+        r1, seg = find_root(id1, seg)
+        r2, seg = find_root(id2, seg)
+        seg, tree_size = union_tree(r1, r2, seg, tree_size)
     for e in yedges:
         # get the index of connected nodes
         id1 = ids[e[0], e[1],   e[2]]
-        id2 = ids[e[0], e[1]-1, e[2]]
+        id2 = ids[e[0], e[1]+1, e[2]]
+        # union-find algorithm
+        r1, seg = find_root(id1, seg)
+        r2, seg = find_root(id2, seg)
+        seg, tree_size = union_tree(r1, r2, seg, tree_size)
     for e in zedges:
         # get the index of connected nodes
         id1 = ids[e[0]  , e[1], e[2]]
-        id2 = ids[e[0]-1, e[1], e[2]]
-
-    # union-find algorithm
-    r1, seg = find_root(id1, seg)
-    r2, seg = find_root(id2, seg)
-    seg, tree_size = union_tree(r1, r2, seg, tree_size)
-
+        id2 = ids[e[0]+1, e[1], e[2]]
+        # union-find algorithm
+        r1, seg = find_root(id1, seg)
+        r2, seg = find_root(id2, seg)
+        seg, tree_size = union_tree(r1, r2, seg, tree_size)
+    
     # relabel all the trees to root id
     for k in xrange(seg.size):
         root_ind, seg = find_root(seg[k], seg)
         seg[k] = root_ind
-    seg = np.reshape(seg, affs.shape)
+    seg = np.reshape(seg, seg_shp)
+    
+    # remove the boundary segments
+    seg = mark_bd(seg, affs, threshold)
     return seg
