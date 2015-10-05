@@ -36,10 +36,10 @@ import numpy as np
 import scipy.sparse as sp #represents the dendrogram as a sparse mat
 import matplotlib.pylab as plt # for plotting the curve
 
-from emirt import io
-from vol_utils import crop #This SHOULD be unnecessary, but could be useful
+import emio
+from volume_util import crop #This SHOULD be unnecessary, but could be useful
 from cynn import relabel
-from rand_error import seg_rand_error
+from rand_error import seg_fr_rand_error
 
 def import_data(h5filename):
 	'''Imports a h5 pyws segmentation file'''
@@ -53,7 +53,7 @@ def import_data(h5filename):
 	return seg, dend_pairs, dend_values
 
 def import_comparison(filename):
-	return io.znn_img_read(filename)
+	return emio.znn_img_read(filename)
 
 def generate_thresholds(thr_low, thr_high, num_thresholds):
 	return np.linspace(thr_low, thr_high, num_thresholds)
@@ -142,26 +142,36 @@ def main(wsmerge_filename, comparison_filename, thr_low, thr_high,
 	thresholds = generate_thresholds(thr_low, thr_high, num_thresholds)
 
 	print "Calculating error curve..."
-	errors = []
+	full_errors = []
+	merge_errors = []
+	split_errors = []
 	for thresh in thresholds:
-		print "Thresh: %f" % thresh
+		print "Thresh: %g" % thresh
 
 		relabelled_seg = relabel_at_threshold(seg, thresh, dend_pairs, dend_values)
 
-		current_error = seg_rand_error(relabelled_seg, comp_seg)
+		full, merge, split = seg_fr_rand_error(relabelled_seg, comp_seg, 
+								merge_err=True, 
+								split_err=True)
 
-		errors.append(current_error)
+		full_errors.append(full)
+		merge_errors.append(merge)
+		split_errors.append(split)
 
 	if draw:
 		print "Drawing Curve..."
-		draw_curve(errors, thresholds)
+		draw_curve(full_errors, thresholds)
 
 	if outname != None:
 		print "Saving Errors..."
-		save_errors(errors, outname,
+		save_errors(full_errors, outname + '_full',
+				thr_high, thr_low, num_thresholds)
+		save_errors(merge_errors, outname + '_merge',
+				thr_high, thr_low, num_thresholds)
+		save_errors(split_errors, outname + '_split',
 				thr_high, thr_low, num_thresholds)
 
-	return errors, thresholds
+		return full_errors, thresholds
 
 if __name__ == '__main__':
 

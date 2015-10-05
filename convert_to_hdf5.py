@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 __doc__ = """
-Quick Conversion of ZNN volume files to hdf5 file format
+Relavitvely Quick Conversion of ZNN volume files to hdf5 file format
 
  This module transfers 3d channel data volumes, and 4d affinity graph
 files (or any 4d output file), to hdf5 file format. The channel data 
@@ -22,12 +22,13 @@ Main Outputs:
 Nicholas Turner, June 2015
 """
 
-from emirt import io
 import h5py
 import argparse
 import numpy as np
 from os import path
 from vol_utils import crop, norm
+
+import emio
 
 def write_channel_file(data, filename, dtype='float32'):
 	'''Placing the cropped channel data within an hdf5 file'''
@@ -58,8 +59,8 @@ def write_affinity_file(data, filename, dtype='float32'):
 def main(net_output_filename, image_filename, output_filename):
 
 	print "Importing data..."
-	net_output = io.znn_img_read(net_output_filename)
-	image = io.znn_img_read(image_filename)
+	net_output = emio.znn_img_read(net_output_filename)
+	image = emio.znn_img_read(image_filename)
 
 	print "Cropping channel data..."
 	#cropping the channel data to the 3d shape of the affinity graph

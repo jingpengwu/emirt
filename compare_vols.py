@@ -26,20 +26,25 @@ Inputs:
 
 Nicholas Turner, June 2015
 '''
+import h5py
 import numpy as np
-import io, show
+import emio, show
 from sys import argv
 
 def load_data(output_fname):
 
-	vol = io.znn_img_read(output_fname)
+	if 'h5' not in output_fname:
+		vol = emio.znn_img_read(output_fname)
 
-	if len(vol.shape) > 3:
-		if vol.shape[0] > 2: #multiclass output
-			vol = vol[0,:,:,:]
-			# vol = np.argmax(vol, axis=0)
-		else: #binary output
-			vol = vol[0,:,:,:]
+		if len(vol.shape) > 3:
+			if vol.shape[0] > 2: #multiclass output
+				vol = vol[0,:,:,:]
+				# vol = np.argmax(vol, axis=0)
+			else: #binary output
+				vol = vol[0,:,:,:]
+	else:
+		f = h5py.File(output_fname)
+		vol = f['/main'] 
 
 	return vol
 

@@ -6,8 +6,11 @@ Created on Wed Jan 28 14:28:47 2015
 """
 import numpy as np
 import matplotlib.pylab as plt
+from matplotlib import colors
 
 class CompareVol:
+    '''A plotting object which encapsulates functionality
+    described in compare_volumes.py'''
     def __init__(self, vols, cmap='gray'):
 
         #zero-padded copies of the volumes
@@ -77,9 +80,12 @@ class CompareVol:
         self.fig.canvas.draw()
         
     def __make_cmap(self, i):
+
         #(0,0,0) = black
         plot_colors = np.vstack(((0,0,0), np.random.rand(500,3)))
-        cmap = colors.ListedColormap(plot_colors)       
+        cmap = colors.ListedColormap(plot_colors)
+
+        
         return cmap
 
     def __press(self, event):
@@ -94,13 +100,22 @@ class CompareVol:
             
             if self.colorplot[self.selected]:
                 new_cmap = self.__make_cmap(self.selected)
+
                 self.cmap[self.selected] = new_cmap
+
             else:
                 self.cmap[self.selected] = 'gray'
+
+        elif 'j' == event.key:
+            self.z += 10
+
+        elif 'k' == event.key:
+            self.z -= 10
 
         elif 'v' == event.key:
             #Display the data values for the given data coordinate
             xcoord, ycoord = int(event.xdata), int(event.ydata)
+            print xcoord, ycoord
 
             print [vol[self.z, ycoord, xcoord] for vol in self.vols]
 
@@ -115,15 +130,16 @@ class CompareVol:
         self.__show_slice()   
         
     def vol_compare_slice(self):   
-        self.fig, self.axs = plt.subplots(1,len(self.vols), sharey=True)
+        self.fig, self.axs = plt.subplots(1,len(self.vols), sharex=True, sharey=True)
         self.fig.canvas.mpl_connect('key_press_event', self.__press)
 
         for i in range(1,len(self.vols)+1):
             ax = self.axs[i-1]
-            ax.imshow(self.vols[i-1][self.z,:,:], interpolation='nearest', cmap=self.cmap[i-1])
+            normed_slice = self.__norm(self.vols[i-1][self.z,:,:])
+            ax.imshow(normed_slice, interpolation='nearest', cmap=self.cmap[i-1])
             ax.set_xlabel( ' volume {0}: slice {1}'.format(i,self.z) )
         plt.show()
-    
+       
 class VolSlider:
     def __init__(self, fname, cmap='gray'):
         if ".h5" in fname or ".hdf5" in fname:
