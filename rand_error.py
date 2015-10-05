@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 __doc__ = '''
-2D Rand Error Between ZNN Volumes
+3D Rand Error Between ZNN Volumes
 
- This module computes the 2D Rand Error between
+ This module computes the 3D Rand Error between
 two ZNN volumes. It also saves a volume for each of the inputs,
 which contains the connected components found by 4-connectivity analysis.
 
@@ -28,7 +28,7 @@ import io
 from cynn import relabel, overlap_matrix
 from os import path
 
-def threshold_volume(vol, threshold):
+def threshold_volume(vol, threshold=0.5):
 	return (vol > threshold).astype('uint32')
 
 def om_rand_error(om):
