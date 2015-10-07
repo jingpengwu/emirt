@@ -24,13 +24,13 @@ def add_boundary_im(im):
     return im2
 
 def add_boundary_2D(vol):
-    Nz,Ny,Nx = vol.shape 
-    for z in range(Nz): 
+    Nz,Ny,Nx = vol.shape
+    for z in range(Nz):
         vol[z,:,:] = add_boundary_im(vol[z,:,:])
     return vol
-    
+
 def add_boundary_3D(vol, neighbor = 6):
-    Nz,Ny,Nx = vol.shape 
+    Nz,Ny,Nx = vol.shape
     vol2 = np.copy(vol)
     for z in range(1,Nz-1):
         for y in range(1,Ny-1):
@@ -67,7 +67,7 @@ def crop3d(vol, target_shape, round_up=None, pick_right=None):
     #Error checking
     odd_dim_diff_exists = any([dim_diffs[i] % 2 == 1 for i in range(len(dim_diffs))])
     if odd_dim_diff_exists and round_up == None and pick_right == None:
-        raise ValueError('Odd dimension difference between volume shape and target' + 
+        raise ValueError('Odd dimension difference between volume shape and target' +
                          ' with no handling specified')
 
     if any([vol.shape[i] < target_shape[i] for i in range(len(target_shape))]	):
@@ -79,7 +79,7 @@ def crop3d(vol, target_shape, round_up=None, pick_right=None):
         margin = np.ceil(dim_diffs / 2.0).astype(np.int)
 
     #round_up == False || round_up == None
-    elif pick_right != None: 
+    elif pick_right != None:
         #voxel selection option will handle the extra
         margin = np.ceil(dim_diffs / 2.0).astype(np.int)
 
@@ -96,9 +96,9 @@ def crop3d(vol, target_shape, round_up=None, pick_right=None):
 
         zmax += 1; ymax += 1; xmax += 1
 
-    elif odd_dim_diff_exists and pick_right != None: 
+    elif odd_dim_diff_exists and pick_right != None:
         #pick_right == False => pick_left
-        
+
         zmin -= 1; ymin -= 1; xmin -= 1
 
     return vol[zmin:zmax, ymin:ymax, xmin:xmax]
@@ -160,17 +160,17 @@ def union_tree(r1, r2, seg, tree_size):
 
 def mark_bd(seg):
     unique, indices, counts = np.unique(seg, return_index=True, return_counts=True)
-    # binary affinity graphs    
+    # binary affinity graphs
     inds = indices[counts==1]
     seg2 = seg.flatten()
     seg2[inds] = 0
     seg = seg2.reshape( seg.shape )
-    return seg   
-    
-def seg_affs( affs, threshold=0.5 ):
+    return seg
+
+def aff2seg( affs, threshold=0.5 ):
     """
     get segmentation from affinity graph using union-find algorithm.
-    tree_size weighted quick union with path compression: 
+    tree_size weighted quick union with path compression:
     https://www.cs.princeton.edu/~rs/AlgsDS07/01UnionFind.pdf
 
     Parameters:
@@ -184,7 +184,7 @@ def seg_affs( affs, threshold=0.5 ):
     if isinstance(affs, dict):
         assert(len(affs.keys())==1)
         affs = affs.values()[0]
-        
+
     # get affinity graphs, copy the array to avoid changing of raw affinity graph
     xaff = np.copy( affs[2,:,:,:] )
     yaff = np.copy( affs[1,:,:,:] )
@@ -197,7 +197,7 @@ def seg_affs( affs, threshold=0.5 ):
 
     # initialize segmentation with individual label of each voxel
     seg_shp = np.asarray( xaff.shape ) + 1
-    N = np.prod( seg_shp ) 
+    N = np.prod( seg_shp )
     ids = np.arange(1, N+1).reshape( seg_shp )
     seg = np.copy( ids ).flatten()
     tree_size = np.ones( seg.shape ).flatten()
@@ -226,14 +226,43 @@ def seg_affs( affs, threshold=0.5 ):
         r1, seg = find_root(id1, seg)
         r2, seg = find_root(id2, seg)
         seg, tree_size = union_tree(r1, r2, seg, tree_size)
-    
+
     # relabel all the trees to root id
     for k in xrange(seg.size):
         root_ind, seg = find_root(seg[k], seg)
         seg[k] = root_ind
     seg = np.reshape(seg, seg_shp)
-    
+
     # remove the boundary segments
     seg = mark_bd(seg)
-    
+
     return seg
+
+def seg2aff( self, lbl ):
+    """
+    transform labels to affinity.
+
+    Parameters
+    ----------
+    lbl : 4D float array, label volume.
+
+    Returns
+    -------
+    aff : 4D float array, affinity graph.
+    """
+    # the 3D volume number should be one
+    assert( lbl.shape[0] == 1 )
+
+    aff_size = np.asarray(lbl.shape)-1
+    aff_size[0] = 3
+
+    aff = np.zeros( tuple(aff_size) , dtype=self.pars['dtype'])
+
+    #x-affinity
+    aff[0,:,:,:] = (lbl[0,1:,1:,1:] == lbl[0,:-1, 1:  ,1: ]) & (lbl[0,1:,1:,1:]>0)
+    #y-affinity
+    aff[1,:,:,:] = (lbl[0,1:,1:,1:] == lbl[0,1: , :-1 ,1: ]) & (lbl[0,1:,1:,1:]>0)
+    #z-affinity
+    aff[2,:,:,:] = (lbl[0,1:,1:,1:] == lbl[0,1: , 1:  ,:-1]) & (lbl[0,1:,1:,1:]>0)
+
+    return aff
