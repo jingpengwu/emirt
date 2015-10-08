@@ -238,7 +238,7 @@ def aff2seg( affs, threshold=0.5 ):
 
     return seg
 
-def seg2aff( self, lbl ):
+def seg2aff( lbl ):
     """
     transform labels to affinity.
 
