@@ -256,7 +256,7 @@ def seg2aff( lbl ):
     aff_size = np.asarray(lbl.shape)-1
     aff_size[0] = 3
 
-    aff = np.zeros( tuple(aff_size) , dtype=self.pars['dtype'])
+    aff = np.zeros( tuple(aff_size) , dtype=lbl.dtype  )
 
     #x-affinity
     aff[0,:,:,:] = (lbl[0,1:,1:,1:] == lbl[0,:-1, 1:  ,1: ]) & (lbl[0,1:,1:,1:]>0)
