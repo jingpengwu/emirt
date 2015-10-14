@@ -15,7 +15,7 @@ class CompareVol:
 
         #zero-padded copies of the volumes
         self.vols = self.__pad(vols)
-        #Number of slices to display 
+        #Number of slices to display
         self.Nz = min([elem.shape[0]-1 for elem in vols])
         #Current z index
         self.z = 0
@@ -63,7 +63,7 @@ class CompareVol:
 
             res = np.copy(imslice)
             res[np.nonzero(res)] = res[np.nonzero(res)] - nonzero_min + 1
-        else: 
+        else:
             res = imslice
         return res
 
@@ -78,26 +78,26 @@ class CompareVol:
             ax.set_xlabel( ' volume {}: slice {}'.format(i,self.z) )
 
         self.fig.canvas.draw()
-        
+
     def __make_cmap(self, i):
 
         #(0,0,0) = black
         plot_colors = np.vstack(((0,0,0), np.random.rand(500,3)))
         cmap = colors.ListedColormap(plot_colors)
 
-        
+
         return cmap
 
     def __press(self, event):
 #       print 'press ' + event.key
         if 'down' == event.key and self.z<self.Nz:
-            self.z+=1            
+            self.z+=1
         elif 'up' == event.key and self.z>-self.Nz:
             self.z-=1
         elif 'c' == event.key:
             #Swap between color display and b&w
             self.colorplot[self.selected] = not self.colorplot[self.selected]
-            
+
             if self.colorplot[self.selected]:
                 new_cmap = self.__make_cmap(self.selected)
 
@@ -127,9 +127,9 @@ class CompareVol:
             if index - 1 < len(self.vols):
                 self.selected = index-1
 
-        self.__show_slice()   
-        
-    def vol_compare_slice(self):   
+        self.__show_slice()
+
+    def vol_compare_slice(self):
         self.fig, self.axs = plt.subplots(1,len(self.vols), sharex=True, sharey=True)
         self.fig.canvas.mpl_connect('key_press_event', self.__press)
 
@@ -139,7 +139,7 @@ class CompareVol:
             ax.imshow(normed_slice, interpolation='nearest', cmap=self.cmap[i-1])
             ax.set_xlabel( ' volume {0}: slice {1}'.format(i,self.z) )
         plt.show()
-       
+
 class VolSlider:
     def __init__(self, fname, cmap='gray'):
         if ".h5" in fname or ".hdf5" in fname:
@@ -158,7 +158,7 @@ class VolSlider:
             self.Nz = self.v1.shape[0]
         self.z = 0
         self.cmap = cmap
-        
+
     def __show_slice(self):
         self.ax1.images.pop()
         if len(self.v1.dims) == 3:
@@ -167,16 +167,16 @@ class VolSlider:
             self.ax1.imshow(self.v1[0,self.z,:,:], interpolation='nearest', cmap=self.cmap)
         self.ax1.set_xlabel( 'first volume: slice {}'.format(self.z) )
         self.fig.canvas.draw()
-        
+
     def __press(self, event):
 #        print 'press ' + event.key
         if 'down' in event.key and self.z<self.Nz:
-            self.z+=1            
+            self.z+=1
         elif 'up' in event.key and self.z>-self.Nz:
             self.z-=1
-        self.__show_slice()        
-        
-    def show(self):   
+        self.__show_slice()
+
+    def show(self):
         self.fig, self.ax1 = plt.subplots(1,1)
         self.fig.canvas.mpl_connect('key_press_event', self.__press)
         if len(self.v1.dims) == 3:
@@ -186,10 +186,10 @@ class VolSlider:
         self.ax1.set_xlabel( 'first  volume: slice {}'.format(self.z) )
 
 def matshow(mat, xlabel=''):
-    import matplotlib.pylab as plt   
+    import matplotlib.pylab as plt
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
-    ax1.matshow(mat, cmap=plt.cm.gray_r)    
+    ax1.matshow(mat, cmap=plt.cm.gray_r)
     # add numbers
     Nx, Ny = mat.shape
     x,y = np.meshgrid(range(Nx), range(Ny))
@@ -205,16 +205,15 @@ def matshow(mat, xlabel=''):
 def imshow(im):
     import matplotlib.pylab as plt
     plt.imshow(im)
-    
+
 # show the labeled image with random color
 def random_color_show( im, mode='im' ):
     import matplotlib.pylab as plt
     import matplotlib.colors as mcolor
     # make a random color map, but the background should be black
-    if 0==im.max():
-        assert('the maximum label is 0!!')
+    assert(im.max()>0)
     cmap_array = np.random.rand ( im.max(),3)
-    cmap_array[0,:] = [0,0,0]   
+    cmap_array[0,:] = [0,0,0]
     cmap=mcolor.ListedColormap( cmap_array )
     if mode=='im':
         plt.imshow(im, cmap= cmap )
@@ -222,10 +221,11 @@ def random_color_show( im, mode='im' ):
         # approximate the matshow for compatability of subplot
         nr, nc = im.shape
         extent = [-0.5, nc-0.5, nr-0.5, -0.5]
-        plt.imshow(im, extent=extent, origin='upper',interpolation='nearest', cmap=cmap) 
+        plt.imshow(im, extent=extent, origin='upper',interpolation='nearest', cmap=cmap)
 #        plt.matshow(im, cmap=mcolor.ListedColormap( cmap_array ) )
     else:
         print 'unknown mode'
+    plt.show()
 
 def progress(count, total, suffix=''):
     import sys

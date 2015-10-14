@@ -136,7 +136,7 @@ def find_root(ind, seg):
     return (ind, seg)
 
 #@autojit(nopython=True)
-def union_tree(r1, r2, seg, tree_size):
+def union_tree(r1, r2, seg, tsz):
     """
     union-find algorithm: tree_sizeed quick union with path compression
 
@@ -148,15 +148,15 @@ def union_tree(r1, r2, seg, tree_size):
 
     Return
     ------
-    seg:       updated segmentation
-    tree_size:    updated tree_size
+    seg:    updated segmentation
+    tsz:    updated tree size
     """
     # merge small tree to big tree according to size
-    if tree_size[r1-1] < tree_size[r2-1]:
+    if tsz[r1-1] < tsz[r2-1]:
         r1, r2 = r2, r1
     seg[r2-1] = r1
-    tree_size[r1-1] = tree_size[r1-1] + tree_size[r2-1]
-    return (seg, tree_size)
+    tsz[r1-1] = tsz[r1-1] + tsz[r2-1]
+    return (seg, tsz)
 
 def mark_bd(seg):
     unique, indices, counts = np.unique(seg, return_index=True, return_counts=True)
@@ -170,7 +170,7 @@ def mark_bd(seg):
 def aff2seg( affs, threshold=0.5 ):
     """
     get segmentation from affinity graph using union-find algorithm.
-    tree_size weighted quick union with path compression:
+    tsz weighted quick union with path compression:
     https://www.cs.princeton.edu/~rs/AlgsDS07/01UnionFind.pdf
 
     Parameters:
@@ -200,7 +200,7 @@ def aff2seg( affs, threshold=0.5 ):
     N = np.prod( seg_shp )
     ids = np.arange(1, N+1).reshape( seg_shp )
     seg = np.copy( ids ).flatten()
-    tree_size = np.ones( seg.shape ).flatten()
+    tsz = np.ones( seg.shape ).flatten()
     # create edge pair
     for e in xedges:
         # get the index of connected nodes
@@ -209,7 +209,7 @@ def aff2seg( affs, threshold=0.5 ):
         # union-find algorithm
         r1, seg = find_root(id1, seg)
         r2, seg = find_root(id2, seg)
-        seg, tree_size = union_tree(r1, r2, seg, tree_size)
+        seg, tsz = union_tree(r1, r2, seg, tsz)
     for e in yedges:
         # get the index of connected nodes
         id1 = ids[e[0], e[1],   e[2]]
@@ -217,7 +217,7 @@ def aff2seg( affs, threshold=0.5 ):
         # union-find algorithm
         r1, seg = find_root(id1, seg)
         r2, seg = find_root(id2, seg)
-        seg, tree_size = union_tree(r1, r2, seg, tree_size)
+        seg, tsz = union_tree(r1, r2, seg, tsz)
     for e in zedges:
         # get the index of connected nodes
         id1 = ids[e[0]  , e[1], e[2]]
@@ -225,7 +225,7 @@ def aff2seg( affs, threshold=0.5 ):
         # union-find algorithm
         r1, seg = find_root(id1, seg)
         r2, seg = find_root(id2, seg)
-        seg, tree_size = union_tree(r1, r2, seg, tree_size)
+        seg, tsz = union_tree(r1, r2, seg, tsz)
 
     # relabel all the trees to root id
     for k in xrange(seg.size):
@@ -266,3 +266,70 @@ def seg2aff( lbl ):
     aff[2,:,:,:] = (lbl[0,1:,1:,1:] == lbl[0,1: , 1:  ,:-1]) & (lbl[0,1:,1:,1:]>0)
 
     return aff
+
+def bdm2seg_2D( bdm, threshold=0.5 ):
+    """
+    transform 2D boundary map to segmentation using connectivity analysis.
+
+    Parameters
+    ----------
+    bdm: 2D float array with value [0,1], boundary map with black boundary
+    threshold: the binarize threshold
+
+    Return
+    ------
+    seg: 2D uint32 array, segmentation
+    """
+    if bdm.ndim==3 and bdm.shape[0]==1:
+        bdm = bdm.reshape((bdm.shape[1], bdm.shape[2]))
+    # make sure that this is a 2D array
+    assert( bdm.ndim==2 )
+    # binarize the volume using threshold
+    bmap = ( bdm>threshold )
+
+    # segmentation initialized with 1-N,
+    # the 0 is left for boundaries
+    seg = np.arange( 1, bmap.size+1 )
+    # segment ids
+    ids = np.copy(seg).reshape( bmap.shape )
+    # tree size of union-find
+    tsz = np.ones( bdm.size )
+
+    # traverse each connectivity along x axis
+    for y in xrange(bdm.shape[0]):
+        for x1 in xrange( bdm.shape[1]-1 ):
+            x2 = x1+1
+            if bmap[y,x1] and bmap[y,x2]:
+                # the id of pixel
+                id1 = ids[y,x1]
+                id2 = ids[y,x2]
+                # find the root
+                r1, seg = find_root(id1, seg)
+                r2, seg = find_root(id2, seg)
+                # union the two tree
+                seg, tsz = union_tree(r1, r2, seg, tsz)
+
+    # traverse each connectivity along y axis
+    for x in xrange(bdm.shape[1]):
+        for y1 in xrange( bdm.shape[0]-1 ):
+            y2 = y1+1
+            if bmap[y1,x] and bmap[y2,x]:
+                # the id of pixel
+                id1 = ids[y1,x]
+                id2 = ids[y2,x]
+                # find the root
+                r1, seg = find_root(id1, seg)
+                r2, seg = find_root(id2, seg)
+                # union the two tree
+                seg, tsz = union_tree(r1, r2, seg, tsz)
+
+    # relabel all the trees to root id
+    for k in xrange(seg.size):
+        root_ind, seg = find_root(seg[k], seg)
+        seg[k] = root_ind
+    # reshape to original shape
+    seg = seg.reshape(bdm.shape)
+    # remove the boundary segments
+    seg = mark_bd(seg)
+
+    return seg
