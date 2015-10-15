@@ -12,7 +12,7 @@ Inputs:
 	-Label Filename
 	-Threshold for the network output
 	-Whether to save connected component volumes (opt) (flag)
-	
+
 Main Outputs:
 
 	-Reports rand error via a print
@@ -108,11 +108,7 @@ def seg_fr_rand_error(seg1, seg2, merge_err=False, split_err=False):
 
 	return om_rand_error(om, merge_err, split_err)
 
-def main(vol_fname, label_fname, threshold=0.5, save=False):
-
-	print "Loading Data..."
-	vol = emio.znn_img_read(vol_fname)
-	label = emio.znn_img_read(label_fname)
+def get_re(vol, label, threshold=0.5, save=False):
 
 	if len(vol.shape) > 3:
 		if vol.shape[0] > 2:
@@ -155,13 +151,20 @@ def main(vol_fname, label_fname, threshold=0.5, save=False):
 
 	return vol_cc
 
+def main(vol_fname, label_fname, threshold=0.5, save=False):
+    print "Loading Data..."
+	vol = emio.imread(vol_fname)
+	label = emio.imread(label_fname)
+
+    get_re(vol, label, threshold, save)
+
 if __name__ == '__main__':
 
 	parser = argparse.ArgumentParser(
 		description=__doc__,
 		formatter_class=argparse.RawDescriptionHelpFormatter)
 
-	parser.add_argument('output_filename', 
+	parser.add_argument('output_filename',
 		help="Filename of the output image")
 	parser.add_argument('label_filename',
 		help="Filename of the labels for comparison")

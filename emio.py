@@ -21,11 +21,13 @@ def imread( fname ):
 #        vol = skimage.io.imread( fname, plugin='tifffile' )
         import tifffile
         vol = tifffile.imread(fname)
-        return vol 
+        return vol
     else:
-        print 'file name error, only suport tif and hdf5 now!!!'
+        print "read as znn image..."
+        return znn_img_read(fname)
 
-def imsave( vol, fname ):    
+
+def imsave( vol, fname ):
     if '.hdf5' in fname or '.h5' in fname:
         import h5py
         f = h5py.File( fname )
@@ -38,14 +40,15 @@ def imsave( vol, fname ):
         import tifffile
         tifffile.imsave(fname, vol)
     else:
-        print 'file name error! only support tif and hdf5 now!!!'
-        
+        print "save as znn image..."
+        znn_img_save(vol, fname)
+
 def save_variable( var, vname ):
     import pickle
     f = open(vname, 'w')
     pickle.dump(var, f)
     f.close()
-    
+
 def load_variable( vname ):
     import pickle
     f = open( vname, 'rb' )
@@ -91,19 +94,19 @@ def tif2h5(intif, outh5):
         for k,page in enumerate(tif):
             hv[k] = page.asarray()
     f.close()
-                
+
 
 def write_for_znn(Dir, vol, cid):
     '''transform volume to znn format'''
     # make directory
-    import emirt.os    
+    import emirt.os
     emirt.os.mkdir_p(Dir )
     emirt.os.mkdir_p(Dir + 'data')
     emirt.os.mkdir_p(Dir + 'spec')
     vol.tofile(Dir + 'data/' + 'batch'+str(cid)+'.image')
     sz = np.asarray(vol.shape)
     sz.tofile(Dir + 'data/' + 'batch'+str(cid)+'.size')
-    
+
     # printf the batch.spec
     f = open(Dir + 'spec/' + 'batch'+str(cid)+'.spec', 'w')
     f.write('[INPUT1]\n')
@@ -111,4 +114,3 @@ def write_for_znn(Dir, vol, cid):
     f.write('ext=image\n')
     f.write('size='+str(sz[2])+','+str(sz[1])+','+str(sz[0])+'\n')
     f.write('pptype=standard2D\n\n')
-    
