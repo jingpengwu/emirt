@@ -140,6 +140,18 @@ class CompareVol:
             ax.set_xlabel( ' volume {0}: slice {1}'.format(i,self.z) )
         plt.show()
 
+def compare_volumes( vols  ):
+    """
+    compare 3D volumes
+
+    Parameters
+    ----------
+    vols: list of 3D array
+    """
+    com = CompareVol(vols)
+    com.vol_compare_slice()
+    return
+
 class VolSlider:
     def __init__(self, fname, cmap='gray'):
         if ".h5" in fname or ".hdf5" in fname:
