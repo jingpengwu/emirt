@@ -370,15 +370,3 @@ def bdm2seg(bdm, threshold=0.5, is_label=True):
         # update the maximum segment id
         maxid = np.max(seg[z,:,:])
     return seg
-
-def get_balance_weight( arr ):
-    # number of nonzero elements
-    pn = float( np.count_nonzero(arr) )
-    # total number of elements
-    num = float( np.size(arr) )
-    zn = num - pn
-
-    # weight of positive and zero
-    wp = 0.5 * num / pn
-    wz = 0.5 * num / zn
-    return wp, wz
