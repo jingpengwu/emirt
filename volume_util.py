@@ -267,7 +267,7 @@ def seg2aff( lbl ):
 
     return aff
 
-def bdm2seg_2D( bdm, threshold=0.5 ):
+def bdm2seg_2D( bdm, threshold=0.5, is_relabel=True ):
     """
     transform 2D boundary map to segmentation using connectivity analysis.
 
@@ -332,4 +332,53 @@ def bdm2seg_2D( bdm, threshold=0.5 ):
     # remove the boundary segments
     seg = mark_bd(seg)
 
+    # relabel the segment id to 1-N
+    if is_relabel:
+        seg = relabel_1N(seg)
     return seg
+
+def relabel_1N(seg):
+    """
+    relabel the segment id to 1-N
+    """
+    # find the id mapping
+    ids1 = np.unique(seg)
+    mp = dict()
+    for i in xrange( len(ids1) ):
+        mp[ ids1[i] ] = i+1
+
+    # replace the segment ids
+    for k in seg.size:
+        seg.flat[k] = mp[ seg.flat[k] ]
+    return seg
+
+def bdm2seg(bdm, threshold=0.5, is_label=True):
+    """
+    transform 3D boundary map to segmentation
+    """
+    if bdm.ndim==4 and bdm.shape[0]==1:
+        bdm = bdm.reshape((bdm.shape[1], bdm.shape[2], bdm.shape[3]))
+    # make sure that this is a 3D array
+    assert(bdm.ndim==3)
+    # initialize the segmentation
+    seg = np.empty(bdm.shape, dtype='uint32')
+    # the maximum id of previous section
+    maxid = 0
+    for z in xrange(bdm.shape[0]):
+        seg2d = bdm2seg_2D(bdm[z,:,:], threshold, is_label=True)
+        seg[z,:,:] = maxid + seg2d
+        # update the maximum segment id
+        maxid = np.max(seg[z,:,:])
+    return seg
+
+def get_balance_weight( arr ):
+    # number of nonzero elements
+    pn = float( np.count_nonzero(arr) )
+    # total number of elements
+    num = float( np.size(arr) )
+    zn = num - pn
+
+    # weight of positive and zero
+    wp = 0.5 * num / pn
+    wz = 0.5 * num / zn
+    return wp, wz
