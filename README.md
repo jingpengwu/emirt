@@ -14,5 +14,7 @@ EM Image Reconstruction Toolbox
 use emirt
 ---------
 add the following line to the end of ~/.bashrc (~/.bashprofile in Mac OS)
+
 `export PYTHONPATH=$PYTHONPATH:"folder/of/emirt"`
+
 and then run: `source ~/.bashrc`
