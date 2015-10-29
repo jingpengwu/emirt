@@ -11,6 +11,13 @@ compile to speedup:
 import numpy as np
 #from numba import autojit
 
+def lbl_RGB2uint32( lbl ):
+    # read the VAST output RGB images
+    assert( lbl.dtype=='uint8' and lbl.shape[3]==3 )
+    lbl = lbl.astype('uint32')
+    lbl = lbl[:,:,:,0]*256*256 + lbl[:,:,:,1]*256 + lbl[:,:,:,2]
+    return lbl
+
 #%% add boundary between connected regions
 def add_boundary_im(im):
     Ni, Nj = im.shape
@@ -155,7 +162,7 @@ def union_tree(r1, r2, seg, tsz):
     if tsz[r1-1] < tsz[r2-1]:
         r1, r2 = r2, r1
     seg[r2-1] = r1
-    tsz[r1-1] = tsz[r1-1] + tsz[r2-1]
+    tsz[r1-1] += tsz[r2-1]
     return (seg, tsz)
 
 def mark_bd(seg):
@@ -275,6 +282,7 @@ def bdm2seg_2D( bdm, threshold=0.5, is_relabel=True ):
     ----------
     bdm: 2D float array with value [0,1], boundary map with black boundary
     threshold: the binarize threshold
+    is_relabel: whether relabel the segment id to 1-N
 
     Return
     ------
@@ -348,7 +356,7 @@ def relabel_1N(seg):
         mp[ ids1[i] ] = i+1
 
     # replace the segment ids
-    for k in seg.size:
+    for k in xrange(seg.size):
         seg.flat[k] = mp[ seg.flat[k] ]
     return seg
 
@@ -365,7 +373,7 @@ def bdm2seg(bdm, threshold=0.5, is_label=True):
     # the maximum id of previous section
     maxid = 0
     for z in xrange(bdm.shape[0]):
-        seg2d = bdm2seg_2D(bdm[z,:,:], threshold, is_label=True)
+        seg2d = bdm2seg_2D(bdm[z,:,:], threshold, is_relabel=True)
         seg[z,:,:] = maxid + seg2d
         # update the maximum segment id
         maxid = np.max(seg[z,:,:])
