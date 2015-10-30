@@ -219,12 +219,12 @@ def imshow(im):
     plt.imshow(im)
 
 # show the labeled image with random color
-def random_color_show( im, mode='im' ):
+def random_color_show( im, mode='mat' ):
     import matplotlib.pylab as plt
     import matplotlib.colors as mcolor
     # make a random color map, but the background should be black
     assert(im.max()>0)
-    cmap_array = np.random.rand ( im.max(),3)
+    cmap_array = np.random.rand ( im.max()+1,3)
     cmap_array[0,:] = [0,0,0]
     cmap=mcolor.ListedColormap( cmap_array )
     if mode=='im':
