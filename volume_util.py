@@ -117,16 +117,13 @@ def norm(vol):
     vol = vol / np.max(vol)
     return vol
 
-#@autojit(nopython=True)
 def find_root(ind, seg):
     """
     quick find with path compression
-
     Parameters
     ----------
     ind:   index of node. start from 1
     seg:   segmenation ID, should be flat
-
     Return
     ------
     ind: root index of input node
@@ -139,20 +136,18 @@ def find_root(ind, seg):
         ind = seg[ind-1]
     # path compression
     for node in path:
-        seg[node-1] = ind
+        seg[node-1] = inds
     return (ind, seg)
 
 #@autojit(nopython=True)
 def union_tree(r1, r2, seg, tsz):
     """
     union-find algorithm: tree_sizeed quick union with path compression
-
     Parameters
     ----------
     r1,r2:  index of two root nodes.
     seg:   the segmenation volume with segment id. this array should be flatterned.
     tree_size: the size of tree.
-
     Return
     ------
     seg:    updated segmentation
@@ -162,7 +157,7 @@ def union_tree(r1, r2, seg, tsz):
     if tsz[r1-1] < tsz[r2-1]:
         r1, r2 = r2, r1
     seg[r2-1] = r1
-    tsz[r1-1] += tsz[r2-1]
+    tsz[r1-1] = tsz[r1-1] + tsz[r2-1]
     return (seg, tsz)
 
 def mark_bd(seg):
@@ -173,6 +168,46 @@ def mark_bd(seg):
     seg2[inds] = 0
     seg = seg2.reshape( seg.shape )
     return seg
+
+def bdm2aff( bdm, Dim = 2 ):
+    """
+    transform boundary map to affinity map
+    currently only do 2D, Z affinity will always be 0!
+
+    Parameters
+    ----------
+    bdm: 2D/3D numpy array, float, boundary map
+
+    Returns
+    -------
+    affs: affinity map, zyx direction
+    """
+    # only support 2D now, could be extended
+    assert( Dim==2 )
+    # always make bdm 3D
+    if bdm.ndim == 2:
+        bdm = bdm.reshape( (1,)+ bdm.shape )
+    assert bdm.ndim == 3
+
+    # initialization
+    affs_shape = bdm.shape
+    affs_shape[0] = 3
+    affs = np.zeros( affs_shape, bdm.dtype)
+
+    # get y affinity
+    for z in xrange( bdm.shape[0] ):
+        for y in xrange( 1, bdm.shape[1] ):
+            for x in xrange( bdm.shape[2] ):
+                affs[1,z,y,x] = min( bdm[z,y,x], bdm[z, y-1, x] )
+
+    # get x affinity
+    for z in xrange( bdm.shape[0] ):
+        for y in xrange( bdm.shape[1] ):
+            for x in xrange( 1, bdm.shape[2] ):
+                affs[2,z,y,x] = min( bdm[z,y,x], bdm[z, y,   x-1] )
+
+    return affs
+
 
 def aff2seg( affs, threshold=0.5 ):
     """
