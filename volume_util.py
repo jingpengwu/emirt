@@ -136,7 +136,7 @@ def find_root(ind, seg):
         ind = seg[ind-1]
     # path compression
     for node in path:
-        seg[node-1] = inds
+        seg[node-1] = ind
     return (ind, seg)
 
 #@autojit(nopython=True)
@@ -190,8 +190,7 @@ def bdm2aff( bdm, Dim = 2 ):
     assert bdm.ndim == 3
 
     # initialization
-    affs_shape = bdm.shape
-    affs_shape[0] = 3
+    affs_shape = (3,) + bdm.shape
     affs = np.zeros( affs_shape, bdm.dtype)
 
     # get y affinity
@@ -226,88 +225,104 @@ def aff2seg( affs, threshold=0.5 ):
     if isinstance(affs, dict):
         assert(len(affs.keys())==1)
         affs = affs.values()[0]
+    # should be 4 dimension
+    assert affs.ndim==4
 
     # get affinity graphs, copy the array to avoid changing of raw affinity graph
     xaff = np.copy( affs[2,:,:,:] )
     yaff = np.copy( affs[1,:,:,:] )
     zaff = np.copy( affs[0,:,:,:] )
 
-    # get edges
-    xedges = np.argwhere( xaff>threshold )
-    yedges = np.argwhere( yaff>threshold )
-    zedges = np.argwhere( zaff>threshold )
-
     # initialize segmentation with individual label of each voxel
-    seg_shp = np.asarray( xaff.shape ) + 1
-    N = np.prod( seg_shp )
-    ids = np.arange(1, N+1).reshape( seg_shp )
-    seg = np.copy( ids ).flatten()
-    tsz = np.ones( seg.shape ).flatten()
-    # create edge pair
-    for e in xedges:
-        # get the index of connected nodes
-        id1 = ids[e[0], e[1], e[2]]
-        id2 = ids[e[0], e[1], e[2]+1]
-        # union-find algorithm
-        r1, seg = find_root(id1, seg)
-        r2, seg = find_root(id2, seg)
-        seg, tsz = union_tree(r1, r2, seg, tsz)
-    for e in yedges:
-        # get the index of connected nodes
-        id1 = ids[e[0], e[1],   e[2]]
-        id2 = ids[e[0], e[1]+1, e[2]]
-        # union-find algorithm
-        r1, seg = find_root(id1, seg)
-        r2, seg = find_root(id2, seg)
-        seg, tsz = union_tree(r1, r2, seg, tsz)
-    for e in zedges:
-        # get the index of connected nodes
-        id1 = ids[e[0]  , e[1], e[2]]
-        id2 = ids[e[0]+1, e[1], e[2]]
-        # union-find algorithm
-        r1, seg = find_root(id1, seg)
-        r2, seg = find_root(id2, seg)
-        seg, tsz = union_tree(r1, r2, seg, tsz)
+    vids = np.arange(xaff.size).reshape( xaff.shape )
+    # use disjoint sets
+    import domains
+    djset = domains.CDisjointSets( xaff.size )
 
-    # relabel all the trees to root id
-    for k in xrange(seg.size):
-        root_ind, seg = find_root(seg[k], seg)
-        seg[k] = root_ind
-    seg = np.reshape(seg, seg_shp)
+    # z affnity
+    for z in xrange( 1, zaff.shape[0] ):
+        for y in xrange( zaff.shape[1] ):
+            for x in xrange( zaff.shape[2] ):
+                if zaff[z,y,x]>threshold:
+                    vid1 = vids[z,   y, x]
+                    vid2 = vids[z-1, y, x]
+                    rid1 = djset.find_root( vid1 )
+                    rid2 = djset.find_root( vid2 )
+                    djset.join( rid1, rid2 )
+
+    # y affinity
+    for z in xrange( yaff.shape[0] ):
+        for y in xrange( 1, yaff.shape[1] ):
+            for x in xrange( yaff.shape[2] ):
+                if yaff[z,y,x]>threshold:
+                    vid1 = vids[z, y,   x]
+                    vid2 = vids[z, y-1, x]
+                    rid1 = djset.find_root( vid1 )
+                    rid2 = djset.find_root( vid2 )
+                    djset.join( rid1, rid2 )
+    # x affinity
+    for z in xrange( xaff.shape[0] ):
+        for y in xrange( xaff.shape[1] ):
+            for x in xrange( 1, xaff.shape[2] ):
+                if xaff[z,y,x]>threshold:
+                    vid1 = vids[z, y, x  ]
+                    vid2 = vids[z, y, x-1]
+                    rid1 = djset.find_root( vid1 )
+                    rid2 = djset.find_root( vid2 )
+                    djset.join( rid1, rid2 )
+
+    # get current segmentation
+    # note that the boundary voxels have separet segment id
+    seg = djset.get_sets().reshape( xaff.shape )
 
     # remove the boundary segments
     seg = mark_bd(seg)
 
     return seg
 
-def seg2aff( lbl ):
+def seg2aff( lbl, affs_dtype='float32' ):
     """
-    transform labels to affinity.
+    transform labels to true affinity.
 
     Parameters
     ----------
-    lbl : 4D float array, label volume.
+    lbl : 3D uint32 array, manual label volume.
 
     Returns
     -------
     aff : 4D float array, affinity graph.
     """
+    if lbl.ndim ==2 :
+        lbl = lbl.reshape( (1,)+lbl.shape )
     # the 3D volume number should be one
-    assert( lbl.shape[0] == 1 )
+    assert lbl.ndim==3
 
-    aff_size = np.asarray(lbl.shape)-1
-    aff_size[0] = 3
+    affs_shape = (3,) + lbl.shape
 
-    aff = np.zeros( tuple(aff_size) , dtype=lbl.dtype  )
+    affs = np.zeros( affs_shape , dtype= affs_dtype  )
 
-    #x-affinity
-    aff[0,:,:,:] = (lbl[0,1:,1:,1:] == lbl[0,:-1, 1:  ,1: ]) & (lbl[0,1:,1:,1:]>0)
-    #y-affinity
-    aff[1,:,:,:] = (lbl[0,1:,1:,1:] == lbl[0,1: , :-1 ,1: ]) & (lbl[0,1:,1:,1:]>0)
-    #z-affinity
-    aff[2,:,:,:] = (lbl[0,1:,1:,1:] == lbl[0,1: , 1:  ,:-1]) & (lbl[0,1:,1:,1:]>0)
+    # z affinity
+    for z in xrange( 1, affs.shape[1] ):
+        for y in xrange( affs.shape[2] ):
+            for x in xrange( affs.shape[3] ):
+                if (lbl[z,y,x]==lbl[z-1,y,x]) and lbl[z,y,x]>0 :
+                    affs[0,z,y,x] = 1.0
 
-    return aff
+    # y affinity
+    for z in xrange( affs.shape[1] ):
+        for y in xrange( 1, affs.shape[2] ):
+            for x in xrange( affs.shape[3] ):
+                if (lbl[z,y,x]==lbl[z,y-1,x]) and lbl[z,y,x]>0 :
+                    affs[1,z,y,x] = 1.0
+
+    # x affinity
+    for z in xrange( affs.shape[1] ):
+        for y in xrange( affs.shape[2] ):
+            for x in xrange( 1, affs.shape[3] ):
+                if (lbl[z,y,x]==lbl[z,y,x-1]) and lbl[z,y,x]>0 :
+                    affs[2,z,y,x] = 1.0
+
+    return affs
 
 def bdm2seg_2D( bdm, threshold=0.5, is_relabel=True ):
     """

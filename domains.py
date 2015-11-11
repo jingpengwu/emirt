@@ -24,8 +24,6 @@ class CDisjointSets:
         # path compression
         # current id
         cid = vid
-        # parent id
-        pid = self._djsets[ cid ]
         while (rid!=cid):
             # parent id
             pid = self._djsets[ cid ]
@@ -53,6 +51,9 @@ class CDisjointSets:
             self._djsets[ sid1 ] = sid2
             self._rank[ sid2 ] += self._rank[ sid1 ]
             return sid2
+
+    def get_sets(self):
+        return self._djsets
 
 class CDomainLabelSizes:
     """
