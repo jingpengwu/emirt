@@ -294,6 +294,9 @@ def seg2aff( lbl, affs_dtype='float32' ):
     """
     if lbl.ndim ==2 :
         lbl = lbl.reshape( (1,)+lbl.shape )
+    elif lbl.ndim ==4:
+        assert lbl.shape[0]==1
+        lbl = lbl.reshape( lbl.shape[1:] )
     # the 3D volume number should be one
     assert lbl.ndim==3
 
