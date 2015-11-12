@@ -273,7 +273,7 @@ def aff2seg( affs, threshold=0.5 ):
 
     # get current segmentation
     # note that the boundary voxels have separet segment id
-    seg = djset.get_sets().reshape( xaff.shape )
+    seg = djset.get_seg().reshape( xaff.shape )
 
     # remove the boundary segments
     seg = mark_bd(seg)

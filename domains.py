@@ -4,9 +4,9 @@ class CDisjointSets:
     def __init__(self, N):
         # initally, every voxel is a segment
         # the parent of each voxel
-        self._djsets = np.arange(N)
+        self._djsets = np.arange(N, dtype='uint32')
         # the rank of each voxel, used for join
-        self._rank = np.ones(N)
+        self._rank = np.ones(N, dtype='uint32')
         # total number of voxels
         self._size = N
         # number of sets
@@ -52,7 +52,13 @@ class CDisjointSets:
             self._rank[ sid2 ] += self._rank[ sid1 ]
             return sid2
 
-    def get_sets(self):
+    def get_seg(self):
+        # label all the voxel to root id
+        for vid in xrange( self._size ):
+            # with path compression,
+            # all the voxels will be labeled as root id
+            rid = self.find_root( vid )
+
         return self._djsets
 
 class CDomainLabelSizes:
