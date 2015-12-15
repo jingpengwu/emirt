@@ -119,6 +119,7 @@ def h5write( data, fname, data_path ):
     """
     save dataset in hdf5 file
     """
+    import h5py
     f = h5py.File( fname, 'a' )
     f.create_dataset(data_path, data=data)
     f.close()
@@ -127,6 +128,7 @@ def h5read( fname, data_path ):
     """
     read dataset in hdf5 file
     """
+    import h5py
     f = h5py.File( fname )
     data = f[data_path].value
     f.close()
