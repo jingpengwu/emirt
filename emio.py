@@ -69,8 +69,8 @@ def znn_img_read( fname, dtype='float64' ):
     vol = np.fromfile(fname + ext, dtype=dtype).reshape(sz)
     return vol
 
-def znn_img_save(vol, fname):
-#    vol = vol.astype('double')
+def znn_img_save(vol, fname, dtype = 'double'):
+    vol = vol.astype('double')
     if ".image" in fname:
         fname = fname.replace(".image", "")
         ext = ".image"
@@ -114,7 +114,7 @@ def write_for_znn(Dir, vol, cid):
     f.write('size='+str(sz[2])+','+str(sz[1])+','+str(sz[0])+'\n')
     f.write('pptype=standard2D\n\n')
 
-def save_dataset_h5( data, fname, data_path ):
+def h5write( data, fname, data_path ):
     """
     save dataset in hdf5 file
     """
@@ -122,7 +122,7 @@ def save_dataset_h5( data, fname, data_path ):
     f.create_dataset(data_path, data=data)
     f.close()
 
-def read_dataset_h5( fname, data_path ):
+def h5read( fname, data_path ):
     """
     read dataset in hdf5 file
     """
