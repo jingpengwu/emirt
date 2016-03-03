@@ -1,2 +1,2 @@
 #!/bin/bash
-bash bin/omnify.sh --headless --cmdfile='omni.cmd'
+~/seungmount/Omni/omni/omni --headless --cmdfile='omni.cmd'
