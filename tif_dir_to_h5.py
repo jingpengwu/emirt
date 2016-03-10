@@ -1,3 +1,19 @@
+#!/usr/bin/python
+"""
+T Macrina
+160310
+
+Make 3D stack of TIF images in a directory (sorted), crop, & save as H5
+
+Args:
+	sys.argv[1]: full path to the TIF image directory
+	sys.argv[2]: filename of the H5 file (placed in the TIF directory)
+	sys.argv[3:7]: x slice start, x slice end, y slice start, y slice end
+
+Returns:
+	H5 file saved in the same directory
+"""
+
 from PIL import Image
 import numpy as np
 import h5py
@@ -55,11 +71,6 @@ def write_to_h5(fn, arr):
 
 def main():
 	"""Make HDF5 3D matrix of TIF images in a sorted directory & cropped
-
-	Args:
-		sys.argv[1]: full path to the TIF image directory
-		sys.argv[2]: filename of the H5 file (placed in the TIF directory)
-		sys.argv[3:7]: x slice start, x slice end, y slice start, y slice end
 	"""
 	dir = os.getcwd()
 	if len(sys.argv) > 1:
