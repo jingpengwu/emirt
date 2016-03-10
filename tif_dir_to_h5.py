@@ -45,7 +45,6 @@ def make_array_from_tif_dir(dir):
 
 	Args:
 		dir: folder path
-		dtype: data type of the output array
 
 	Returns:
 		An ndarray of dtype with at least 3 dimesnions
