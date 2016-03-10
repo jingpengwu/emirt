@@ -4,10 +4,10 @@ import h5py
 import os
 import sys
 
-def tif_to_array(fn, dtype=np.uint32):
+def tif_to_array(fn):
 	"""Open TIF image and convert to numpy ndarray of dtype
 
-	Currently tested for only for uint8 -> uint8, uint32 or uint32 -> uint32
+	Currently tested for only for uint8 -> uint8, uint32 or uint24 -> uint32
 
 	Args:
 		fn: filename (full path) of the image
@@ -17,13 +17,11 @@ def tif_to_array(fn, dtype=np.uint32):
 		An ndarray of dtype
 	"""
 	img = np.array(Image.open(fn))
-	if img.dtype == np.uint32:
+	if len(img.shape) == 3:
 		img = np.dstack((np.zeros(img.shape[:2]+(1,)), img))
 		img = img[:,:, ::-1]
-		img = img.astype(np.uint8).view(dtype)
+		img = img.astype(np.uint8).view(np.uint32)
 		img = img.reshape(img.shape[:2])
-	else:
-		img = img.astype(dtype)
 	return img
 
 def make_array_from_tif_dir(dir):
