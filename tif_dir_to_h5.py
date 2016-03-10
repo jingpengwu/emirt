@@ -27,7 +27,6 @@ def tif_to_array(fn):
 
 	Args:
 		fn: filename (full path) of the image
-		dtype: data type of the output array
 
 	Returns:
 		An ndarray of dtype
