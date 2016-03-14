@@ -29,7 +29,7 @@ def tif_to_array(fn):
 		fn: filename (full path) of the image
 
 	Returns:
-		An ndarray of dtype
+		An ndarray of dtype, in z,y,x order
 	"""
 	img = np.array(Image.open(fn))
 	if len(img.shape) == 3:
@@ -80,6 +80,7 @@ def main():
 					slice(None))
 	array = make_array_from_tif_dir(dir)
 	array = array[crop]
+	array = array.transpose((2,1,0))
 	fn = os.path.split(os.getcwd())[-1] + ".h5"
 	if len(sys.argv) > 2:
 		fn = sys.argv[2]
