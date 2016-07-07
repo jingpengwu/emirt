@@ -26,6 +26,7 @@ Returns:
 """
 
 import os
+import sys
 from shutil import copyfile
 from datetime import datetime
 import h5_to_tif_dir as h52tif
@@ -45,30 +46,32 @@ def mkdir(dir):
 	else:
 		print dir + ' already exists'
 
-def setup_VAST_dir(dst_dir):
+def setup_VAST_dir(dir):
 	# some sort of abstraction for directory names
-	for k, d in dirs:
-		mkdir(os.path.join(dst_dir, d))
+	mkdir(dir)
+	for k, d in dirs.iteritems():
+		mkdir(os.path.join(dir, d))
 
-def split_H5(h5_file, dst_dir):
+def split_h5(h5_file, dir):
 	if os.path.isfile(h5_file):
-		copyfile(h5_file, dst_dir)
-		h52tif.h52tif(h5_file, os.path.join(dst_dir, dirs['raw']))
+		fn = os.path.split(h5_file)[1]
+		copyfile(h5_file, os.path.join(dir, fn))
+		h52tif.h52tif(h5_file, os.path.join(dir, dirs['raw']))
 
 def main():
-	if len(sys.argv) == 2:
+	if len(sys.argv) > 2:
 		fn = sys.argv[1]
 		dir = sys.argv[2]
 		setup_VAST_dir(dir)
 		split_h5(fn, dir)
-		readme = 'VAST directory: ' + dst_dir + '\n'
-		readme += 'Created '
+		readme = 'VAST directory:\n\t' + dir + '\n'
+		readme += 'Original H5 src:\n\t' + fn + '\n'
+		readme += 'Created by:\n\t' 
+		readme += os.getenv("USER") + '\n\t'
 		readme += '{:%Y-%m-%d %H:%M:%S}'.format(datetime.now()) + '\n'
-		readme += 'Original H5 src: ' + fn + '\n'
-		readme += 'Created by ' + os.getenv("USER")
-		readme += 'Using ' + __file__
-		with open(os.path.join(dst_dir, 'README.md')) as file:
-			file.write('')
+		readme += 'Script:\n\t' + __file__ + '\n'
+		with open(os.path.join(dir, 'README.md'), 'w') as file:
+			file.write(readme)
 	else:
 		print 'Need only H5 file & (optional) destination dir'
 
