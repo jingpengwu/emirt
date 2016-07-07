@@ -45,14 +45,13 @@ def write_to_tif(fn, arr):
 	img = Image.fromarray(arr)
 	img.save(fn)
 
-def h52tif(fn, dir):
+def h52tif(h5_path, dir):
 	"""Write directory of TIF images for each layer in 3D image H5 file
 	"""
-	if os.path.isfile(fn):
-		files = os.listdir(dir)
+	if os.path.isfile(h5_path):
+		fn = os.path.join(dir, os.path.split(h5_path)[1])
 		if fn.endswith(".h5") or fn.endswith(".hdf5"):
-			fn = os.path.join(dir, file)
-			arr = h5_to_array(fn)
+			arr = h5_to_array(h5_path)
 			write_array_to_sections(fn, arr)
 	else:
 		print fn + " does not exist"
@@ -62,7 +61,7 @@ def main():
 		fn = sys.argv[1]
 		dir = os.getcwd()
 		h52tif(fn, dir)
-	else if len(sys.argv) == 2:
+	elif len(sys.argv) == 2:
 		fn = sys.argv[1]
 		dir = sys.argv[2]
 		h52tif(fn, dir)
