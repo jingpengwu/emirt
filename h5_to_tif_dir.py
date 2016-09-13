@@ -4,7 +4,7 @@ T Macrina
 160314
 
 Make TIF images of all H5 files in directory
-**H5 file must have "main" group with the image
+**H5 file must have "img" group with the image
 
 Args:
 	sys.argv[1]: full path to the H5 image directory
@@ -29,7 +29,7 @@ def h5_to_array(fn):
 		An ndarray of dtype
 	"""
 	f = h5py.File(fn, "r")
-	return np.array(f["/main"]).T
+	return np.array(f["/img"]).T
 
 def write_array_to_sections(fn, arr):
 	"""Split 3d ndarray along z dim into 2d sections & save as tifs
@@ -57,11 +57,11 @@ def h52tif(h5_path, dir):
 		print fn + " does not exist"
 
 def main():
-	if len(sys.argv) == 1:
+	if len(sys.argv) == 2:
 		fn = sys.argv[1]
 		dir = os.getcwd()
 		h52tif(fn, dir)
-	elif len(sys.argv) == 2:
+	elif len(sys.argv) == 3:
 		fn = sys.argv[1]
 		dir = sys.argv[2]
 		h52tif(fn, dir)

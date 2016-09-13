@@ -18,7 +18,7 @@ dst_dir/
 	[H5_channel].h5
 
 Args:
-	sys.argv[1]: full path to the H5 image (**with 'main' group)
+	sys.argv[1]: full path to the H5 image (**with 'img' group)
 	sys.argv[2]: path to the directory that should be setup as dst_dir above
 
 Returns:
@@ -55,8 +55,11 @@ def setup_VAST_dir(dir):
 def split_h5(h5_file, dir):
 	if os.path.isfile(h5_file):
 		fn = os.path.split(h5_file)[1]
+		print 'Copying ' + fn + ' to ' + dir
 		copyfile(h5_file, os.path.join(dir, fn))
 		h52tif.h52tif(h5_file, os.path.join(dir, dirs['raw']))
+	else:
+		print h5_file + ' does not exist'
 
 def main():
 	if len(sys.argv) > 2:
