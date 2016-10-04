@@ -29,7 +29,10 @@ def h5_to_array(fn):
 		An ndarray of dtype
 	"""
 	f = h5py.File(fn, "r")
-	return np.array(f["/img"]).T
+	if "/img" in f:
+		return np.array(f["/img"]).T
+	else:
+		return np.array(f["/main"]).T
 
 def write_array_to_sections(fn, arr):
 	"""Split 3d ndarray along z dim into 2d sections & save as tifs
@@ -42,7 +45,10 @@ def write_array_to_sections(fn, arr):
 def write_to_tif(fn, arr):
 	"""Write ndarray to tif file
 	"""
-	img = Image.fromarray(arr)
+	if arr.dtype == 'uint32':
+		img = Image.fromarray(arr, mode='I')
+	else:
+		img = Image.fromarray(arr)
 	img.save(fn)
 
 def h52tif(h5_path, dir):
