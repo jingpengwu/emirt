@@ -45,11 +45,17 @@ def write_array_to_sections(fn, arr):
 def write_to_tif(fn, arr):
 	"""Write ndarray to tif file
 	"""
-	if arr.dtype == 'uint32':
-		img = Image.fromarray(arr, mode='I')
-	else:
-		img = Image.fromarray(arr)
+	img = Image.fromarray(arr)
 	img.save(fn)
+
+def convert_uint32_to_rgb(arr):
+	o = np.asarray(arr * ((2**24-1)/float(arr.max())), dtype='uint32')
+	o = np.zeros(np.append(np.array(arr.shape ), 3), dtype='uint8')
+
+	o[:,:,:, 0] = np.remainder(arr, 256)
+	o[:,:,:, 1] = np.remainder(arr, 25536) / 256
+	o[:,:,:, 2] = arr / 25536
+	return o
 
 def h52tif(h5_path, dir):
 	"""Write directory of TIF images for each layer in 3D image H5 file
@@ -58,6 +64,8 @@ def h52tif(h5_path, dir):
 		fn = os.path.join(dir, os.path.split(h5_path)[1])
 		if fn.endswith(".h5") or fn.endswith(".hdf5"):
 			arr = h5_to_array(h5_path)
+			if arr.dtype == 'uint32':
+				arr = convert_uint32_to_rgb(arr)
 			write_array_to_sections(fn, arr)
 	else:
 		print fn + " does not exist"
