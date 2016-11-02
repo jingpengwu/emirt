@@ -8,22 +8,18 @@ Crop all TIFs in a directory and save as renamed TIFs in the directory
 Args:
 	sys.argv[1]: full path to the TIF image directory
 	sys.argv[2:6]: x slice start, x slice end, y slice start, y slice end
+	sys.argv[7]: use uint32
 
 Returns:
 	Renamed cropped TIFs
 """
 
-# from PIL import Image
+from PIL import Image
 from scipy.misc import imread
-from scipy.misc import imsave
 import numpy as np
 import h5py
 import os
 import sys
-
-def convert_to_uint32(arr):
-	n = 4 - arr.shape[2]
-	return np.dstack((arr, np.zeros(arr.shape[:2]+(n,)))).astype(np.uint8)
 
 def tif_to_array(fn):
 	"""Open TIF image and convert to numpy ndarray of dtype
@@ -60,12 +56,16 @@ def crop_dir(src_dir, dst_dir, crop, use_uint32=False):
 			arr = arr[c]
 			if use_uint32:
 				arr = convert_to_uint32(arr)
-			write_to_tif(dst_fn, arr)
+			write_to_tif(dst_fn, arr, use_uint32)
 
-def write_to_tif(fn, arr):
+def write_to_tif(fn, arr, use_uint32):
 	"""Write ndarray to tif file
 	"""
-	imsave(fn, arr)
+	if use_uint32:
+		img = Image.fromarray(arr, mode='I')
+	else:
+		img = Image.fromarray(arr)
+	img.save(fn)
 
 def main():
 	"""Make HDF5 3D matrix of TIF images in a sorted directory & cropped
