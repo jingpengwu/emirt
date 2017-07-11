@@ -12,7 +12,10 @@ def imread( fname ):
     if '.hdf5' in fname or '.h5' in fname:
         import h5py
         f = h5py.File( fname )
-        v = np.asarray( f['/main'] )
+        if 'main' in f.keys():
+            v = np.asarray( f['/main'] )
+        elif 'img' in f.keys():
+            v = np.asarray( f['img'] )
         f.close()
         print 'finished reading image stack :)'
         return v
