@@ -23,9 +23,11 @@ import sys
 import csv
 import glob
 
-layout_fn = "/usr/people/tmacrina/seungmount/Omni/TracerTasks/pinky/ground_truth/stitched_vol19-vol34/layout.csv"
+# layout_fn = "/usr/people/tmacrina/seungmount/Omni/TracerTasks/pinky/ground_truth/stitched_vol19-vol34/layout.csv"
+layout_fn = "/usr/people/tmacrina/seungmount/Omni/TracerTasks/pinky/ground_truth/stitched_vol40-vol41/layout.csv"
 # layout = [[1,1,"/usr/people/tmacrina/seungmount/Omni/TracerTasks/pinky/ground_truth/vol19"],
-# 		  [1,2,"/usr/people/tmacrina/seungmount/Omni/TracerTasks/pinky/ground_truth/vol20"]]
+# 		  [1,2,"/usr/people/tmacrina/seungmount/Omni/TracerTasks/pinky/ground_truth/vol20"],
+# 		  [2,1,"/usr/people/tmacrina/seungmount/Omni/TracerTasks/pinky/ground_truth/vol23"]]
 img_size = np.array([512,512])
 # http://stackoverflow.com/questions/25298592/converting-32-bit-integer-into-array-of-four-8-bit-integers-in-python
 dt = np.dtype(('i4', [('bytes','u1',4)]))
@@ -60,17 +62,15 @@ def uint32_to_uint24(arr):
 def crop_image(img, crop=(slice(0,img_size[0]), slice(0,img_size[1]))):
 	return img[crop]
 
-def stitch_images(images, locations, labels=False):
+def stitch_images(images, locations, max_labels, labels=False):
 	o = create_blank_image(locations, labels)
-	max_px = 0
-	for (img, (r,c)) in zip(images, locations):
+	for (k, (img, (r,c))) in enumerate(zip(images, locations)):
 		ij = (slice((r-1)*img_size[0], r*img_size[0]), 
 				slice((c-1)*img_size[1], c*img_size[1]))
 		if labels:
 			imgZ = img != 0
-			img += max_px
+			img += max_labels[k] + 1
 			img = np.multiply(img, imgZ)
-			max_px = np.max(img) + 1
 		o[ij] = img
 	return o
 
@@ -93,6 +93,18 @@ def create_locations(layout):
 	cols = a[1]
 	return zip(rows, cols)
 
+def calculate_max_labels(filenames_list):
+	print 'Calculating max labels...'
+	max_labels = np.zeros(len(filenames_list)+1)
+	for (k, filenames) in enumerate(filenames_list):
+		for fn in filenames:
+			img = np.array(imread(fn))
+			img = uint24_to_uint32(img)
+			max_px = np.max(img)
+			if max_px > max_labels[k+1]:
+				max_labels[k+1] = max_px
+	return np.cumsum(max_labels).astype(np.uint32)
+
 def create_image_list(layout, src_dir_name):
 	filenames_list = []
 	dirs = zip(*layout)[2]
@@ -102,11 +114,12 @@ def create_image_list(layout, src_dir_name):
 		filenames.sort()
 		filenames = [os.path.join(src_dir, fn) for fn in filenames]
 		filenames_list.append(filenames)
-	return zip(*filenames_list)
+	return filenames_list
 
 def main():
 	layout = load_layout(layout_fn)
 	src_dir_name = sys.argv[1]
+	labels = False
 	if src_dir_name != 'raw':
 		labels = True
 	dst_dir = os.path.join(sys.argv[2], sys.argv[1])
@@ -114,9 +127,14 @@ def main():
 		os.makedirs(dst_dir)
 	locations = create_locations(layout)
 	image_filenames_list = create_image_list(layout, src_dir_name)
-	for k, image_filenames in enumerate(image_filenames_list):
+	image_filenames_by_section = zip(*image_filenames_list)
+	max_labels = np.zeros(len(image_filenames_list))
+	if labels:
+		max_labels = calculate_max_labels(image_filenames_list)
+	print "max_labels: " + str(max_labels)
+	for k, image_filenames in enumerate(image_filenames_by_section):
 		images = load_images(image_filenames, labels)
-		stitched = stitch_images(images, locations, labels)
+		stitched = stitch_images(images, locations, max_labels, labels)
 		fn = src_dir_name + "%03d.tif" % k
 		out_fn = os.path.join(dst_dir, fn)
 		print 'saving ' + str(image_filenames) + "\n\t=> " + out_fn

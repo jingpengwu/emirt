@@ -20,10 +20,10 @@ import shutil
 def write_cmd_file(omni_fn, chann_fn, seg_fn):
 	cmd = 'create:' + omni_fn + '\n'
 	cmd += 'loadHDF5chann:' + chann_fn + '\n'
-	cmd += 'setChanResolution:1,4,4,40' + '\n'
+	cmd += 'setChanResolution:1,6,6,30' + '\n'
 	cmd += 'setChanAbsOffset:,1,0,0,0' + '\n'
 	cmd += 'loadHDF5seg:' + seg_fn + '\n'
-	cmd += 'setSegResolution:1,4,4,40' + '\n'
+	cmd += 'setSegResolution:1,6,6,30' + '\n'
 	cmd += 'setSegAbsOffset:1,0,0,0' + '\n'
 	cmd += 'mesh' + '\n'
 	cmd += 'quit' + '\n'

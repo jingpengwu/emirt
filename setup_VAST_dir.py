@@ -18,7 +18,7 @@ dst_dir/
 	[H5_channel].h5
 
 Args:
-	sys.argv[1]: full path to the H5 image (**with 'img' group)
+	sys.argv[1]: full path to the H5 image (**with 'img' or 'main'  group)
 	sys.argv[2]: path to the directory that should be setup as dst_dir above
 
 Returns:

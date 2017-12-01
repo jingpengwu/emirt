@@ -4,7 +4,7 @@ T Macrina
 160314
 
 Make TIF images of all H5 files in directory
-**H5 file must have "img" group with the image
+**H5 file must have "img" or "main" group with the image
 
 Args:
 	sys.argv[1]: full path to the H5 image directory
@@ -68,7 +68,7 @@ def h52tif(h5_path, dir):
 				arr = convert_uint32_to_rgb(arr)
 			write_array_to_sections(fn, arr)
 	else:
-		print fn + " does not exist"
+		print h5_path + " does not exist"
 
 def main():
 	if len(sys.argv) == 2:
