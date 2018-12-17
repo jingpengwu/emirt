@@ -1,0 +1,4 @@
+numpy
+tifffile
+h5py
+scipy 
