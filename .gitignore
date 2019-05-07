@@ -1,0 +1,6 @@
+.pytest_cache/
+emirt.egg-info/
+emirt/__pycache__/
+jwu/
+tmp/
+
