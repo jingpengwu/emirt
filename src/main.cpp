@@ -1,10 +1,11 @@
 #include <pybind11/pybind11.h>
+#define FORCE_IMPORT_ARRAY
 #include "seg.hpp"
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(emirt, m){
-
+    xt::import_numpy();
     m.doc() = R"pbdoc(
         emirt
         ---------
